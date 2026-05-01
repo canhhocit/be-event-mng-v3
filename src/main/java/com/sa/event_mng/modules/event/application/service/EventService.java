@@ -1,5 +1,6 @@
 package com.sa.event_mng.modules.event.application.service;
 
+import com.sa.event_mng.modules.event.application.dto.request.EventFilterRequest;
 import com.sa.event_mng.modules.event.application.dto.request.EventRequest;
 import com.sa.event_mng.modules.event.application.dto.response.EventResponse;
 import com.sa.event_mng.modules.event.application.dto.response.OrganizerStatsResponse;
@@ -102,14 +103,7 @@ public class EventService {
         return eventMapper.toEventResponse(savedEvent);
     }
 
-    public Page<EventResponse> getAllPublished(
-        String search, 
-        String province, 
-        java.math.BigDecimal minPrice, 
-        java.math.BigDecimal maxPrice, 
-        LocalDateTime startDate, 
-        LocalDateTime endDate, 
-        PageRequest pageRequest) {
+    public Page<EventResponse> getAllPublished(EventFilterRequest filter, PageRequest pageRequest) {
             
             List<EventStatus> activeStatuses = List.of(
                             EventStatus.UPCOMING,
@@ -118,11 +112,11 @@ public class EventService {
             );
             
             Specification<Event> spec = EventSpecification.filterEvents(
-                search, province, minPrice, maxPrice, startDate, endDate, activeStatuses
+                filter.getKeyword(), filter.getProvince(), filter.getMinPrice(), filter.getMaxPrice(),
+                filter.getStartDate(), filter.getEndDate(), activeStatuses, filter.getCategoryId()
             );
 
-            Page<Event> events = eventRepository.findAll(spec, pageRequest);
-            return events.map(eventMapper::toEventResponse);
+            return eventRepository.findAll(spec, pageRequest).map(eventMapper::toEventResponse);
     }
 
     public EventResponse getById(Long id) {

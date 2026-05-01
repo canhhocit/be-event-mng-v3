@@ -16,13 +16,14 @@ import java.util.List;
 public class EventSpecification {
 
     public static Specification<Event> filterEvents(
-            String search, 
-            String province, 
-            BigDecimal minPrice, 
-            BigDecimal maxPrice, 
-            LocalDateTime startDate, 
+            String keyword,
+            String province,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            LocalDateTime startDate,
             LocalDateTime endDate,
-            List<EventStatus> statuses) {
+            List<EventStatus> statuses,
+            Long categoryId) {
         
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -33,11 +34,16 @@ public class EventSpecification {
             }
 
             // Lọc theo từ khóa (tìm trong tên sự kiện)
-            if (search != null && !search.isBlank()) {
+            if (keyword != null && !keyword.isBlank()) {
                 predicates.add(criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("name")), 
-                        "%" + search.toLowerCase() + "%"
+                        criteriaBuilder.lower(root.get("name")),
+                        "%" + keyword.toLowerCase() + "%"
                 ));
+            }
+
+            // Lọc theo danh mục
+            if (categoryId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("category").get("id"), categoryId));
             }
 
             // Lọc theo Tỉnh/Thành phố
