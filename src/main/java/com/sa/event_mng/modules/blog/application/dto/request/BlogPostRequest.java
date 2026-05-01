@@ -21,6 +21,12 @@ public class BlogPostRequest {
     String content;
 
     String thumbnail;
+    
+    Set<Long> eventIds;
+    
+    String metaTitle;
+    
+    String metaDescription;
 
     Set<Long> tagIds;
 }

@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -35,14 +34,24 @@ public class BlogPost extends BaseEntity {
     private String content;
 
     private String thumbnail;
+    
+    @ElementCollection
+    @CollectionTable(name = "blog_post_event_ids", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "event_id")
+    private Set<Long> eventIds;
+
+    @Column(name = "meta_title")
+    private String metaTitle;
+
+    @Column(name = "meta_description", columnDefinition = "TEXT")
+    private String metaDescription;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
     @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private BlogStatus status = BlogStatus.DRAFT;
+    private BlogStatus status;
 
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
@@ -53,6 +62,5 @@ public class BlogPost extends BaseEntity {
         joinColumns = @JoinColumn(name = "post_id"),
         inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
-    @Builder.Default
-    private Set<BlogTag> tags = new HashSet<>();
+    private Set<BlogTag> tags;
 }

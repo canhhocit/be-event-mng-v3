@@ -18,6 +18,9 @@ public class BlogPostResponse {
     String summary;
     String content;
     String thumbnail;
+    Set<Long> eventIds;
+    String metaTitle;
+    String metaDescription;
     String authorName;
     String status;
     LocalDateTime publishedAt;

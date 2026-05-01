@@ -37,7 +37,7 @@ public class SecurityConfig {
       "/auth/verify",
       "/categories/**",
       "/events/**",
-      "/events/blog-news",
+      "/blog/**",
       "/images/**",
       "/v3/api-docs/**",
       "/swagger-ui/**",

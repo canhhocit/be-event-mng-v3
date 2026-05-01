@@ -74,6 +74,9 @@ public class BlogService {
                 .summary(request.getSummary())
                 .content(request.getContent())
                 .thumbnail(request.getThumbnail())
+                .eventIds(request.getEventIds())
+                .metaTitle(request.getMetaTitle())
+                .metaDescription(request.getMetaDescription())
                 .author(author)
                 .tags(resolveTags(request.getTagIds()))
                 .status(BlogStatus.DRAFT)
@@ -91,6 +94,9 @@ public class BlogService {
         post.setSummary(request.getSummary());
         post.setContent(request.getContent());
         post.setThumbnail(request.getThumbnail());
+        post.setEventIds(request.getEventIds());
+        post.setMetaTitle(request.getMetaTitle());
+        post.setMetaDescription(request.getMetaDescription());
         post.setTags(resolveTags(request.getTagIds()));
         post.setStatus(BlogStatus.DRAFT);
         return blogMapper.toPostResponse(blogPostRepository.save(post));
@@ -130,6 +136,9 @@ public class BlogService {
                 .summary(request.getSummary())
                 .content(request.getContent())
                 .thumbnail(request.getThumbnail())
+                .eventIds(request.getEventIds())
+                .metaTitle(request.getMetaTitle())
+                .metaDescription(request.getMetaDescription())
                 .author(author)
                 .tags(resolveTags(request.getTagIds()))
                 .build();
@@ -145,6 +154,9 @@ public class BlogService {
         post.setSummary(request.getSummary());
         post.setContent(request.getContent());
         post.setThumbnail(request.getThumbnail());
+        post.setEventIds(request.getEventIds());
+        post.setMetaTitle(request.getMetaTitle());
+        post.setMetaDescription(request.getMetaDescription());
         post.setTags(resolveTags(request.getTagIds()));
         return blogMapper.toPostResponse(blogPostRepository.save(post));
     }
