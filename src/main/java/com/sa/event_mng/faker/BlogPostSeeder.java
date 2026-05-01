@@ -5,6 +5,7 @@ import com.sa.event_mng.modules.blog.domain.model.BlogStatus;
 import com.sa.event_mng.modules.blog.domain.model.BlogTag;
 import com.sa.event_mng.modules.blog.domain.repository.BlogPostRepository;
 import com.sa.event_mng.modules.blog.domain.repository.BlogTagRepository;
+import com.sa.event_mng.modules.event.domain.repository.EventRepository;
 import com.sa.event_mng.modules.identity.domain.model.User;
 import com.sa.event_mng.modules.identity.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -22,6 +24,15 @@ public class BlogPostSeeder {
     private final BlogPostRepository blogPostRepository;
     private final BlogTagRepository blogTagRepository;
     private final UserRepository userRepository;
+    private final EventRepository eventRepository;
+
+    private static final String[] THUMBNAILS = {
+            "https://picsum.photos/seed/blog1/800/400",
+            "https://picsum.photos/seed/blog2/800/400",
+            "https://picsum.photos/seed/blog3/800/400",
+            "https://picsum.photos/seed/blog4/800/400",
+            "https://picsum.photos/seed/blog5/800/400"
+    };
 
     private static final String[] TITLES = {
             "Top 5 sự kiện âm nhạc không thể bỏ lỡ năm 2025",
@@ -58,6 +69,7 @@ public class BlogPostSeeder {
         List<BlogTag> tags = blogTagRepository.findAll();
         if (authors.isEmpty()) return;
 
+        List<Long> eventIds = eventRepository.findAll().stream().map(e -> e.getId()).collect(Collectors.toList());
         BlogStatus[] statuses = BlogStatus.values();
 
         for (int i = 0; i < POST_COUNT; i++) {
@@ -77,11 +89,23 @@ public class BlogPostSeeder {
                 postTags.addAll(shuffled.subList(0, tagCount));
             }
 
+            Set<Long> postEventIds = new HashSet<>();
+            if (!eventIds.isEmpty()) {
+                int eventCount = 1 + random.nextInt(Math.min(3, eventIds.size()));
+                List<Long> shuffledEvents = new ArrayList<>(eventIds);
+                Collections.shuffle(shuffledEvents, random);
+                postEventIds.addAll(shuffledEvents.subList(0, eventCount));
+            }
+
             blogPostRepository.save(BlogPost.builder()
                     .title(title)
                     .slug(slug)
                     .summary(SUMMARIES[i % SUMMARIES.length])
                     .content(CONTENT_TEMPLATE)
+                    .thumbnail(THUMBNAILS[i % THUMBNAILS.length])
+                    .eventIds(postEventIds)
+                    .metaTitle(title)
+                    .metaDescription(SUMMARIES[i % SUMMARIES.length])
                     .author(authors.get(random.nextInt(authors.size())))
                     .status(status)
                     .publishedAt(publishedAt)
