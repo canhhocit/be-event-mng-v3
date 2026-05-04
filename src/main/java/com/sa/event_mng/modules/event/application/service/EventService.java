@@ -18,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import com.sa.event_mng.shared.infrastructure.cloudinary.CloudinaryService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,9 +28,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
-import java.io.IOException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,6 +45,7 @@ public class EventService {
     EventMapper eventMapper;
     TicketTypeRepository ticketTypeRepository;
     StatisticsOrderRepository statisticsOrderRepository;
+    CloudinaryService cloudinaryService;
     @Value("${app.file.base-url}")
     @lombok.experimental.NonFinal
     String fileBaseUrl;
@@ -106,14 +105,13 @@ public class EventService {
     public Page<EventResponse> getAllPublished(EventFilterRequest filter, PageRequest pageRequest) {
             
             List<EventStatus> activeStatuses = List.of(
-                            EventStatus.UPCOMING,
-                            EventStatus.OPENING,
-                            EventStatus.CLOSED
+                            EventStatus.OPENING
             );
             
             Specification<Event> spec = EventSpecification.filterEvents(
                 filter.getKeyword(), filter.getProvince(), filter.getMinPrice(), filter.getMaxPrice(),
-                filter.getStartDate(), filter.getEndDate(), activeStatuses, filter.getCategoryId()
+                filter.getStartDate(), filter.getEndDate(), activeStatuses, filter.getCategoryId(),
+                true
             );
 
             return eventRepository.findAll(spec, pageRequest).map(eventMapper::toEventResponse);
@@ -182,24 +180,10 @@ public class EventService {
 
     private List<EventImage> saveImages(List<MultipartFile> files, Event event) {
         List<EventImage> images = new ArrayList<>();
-        File uploadDir = new File("uploads/");
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
-        }
-
         for (MultipartFile file : files) {
-            if (file.isEmpty())
-                continue;
-            try {
-                String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-                File destinationFile = new File(
-                        uploadDir.getAbsolutePath() + File.separator + filename);
-                file.transferTo(destinationFile);
-                String imageUrl = fileBaseUrl + "/" + filename;
-                images.add(EventImage.builder().imageUrl(imageUrl).event(event).build());
-            } catch (IOException e) {
-                throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
-            }
+            if (file.isEmpty()) continue;
+            String imageUrl = cloudinaryService.uploadFile(file);
+            images.add(EventImage.builder().imageUrl(imageUrl).event(event).build());
         }
         return images;
     }

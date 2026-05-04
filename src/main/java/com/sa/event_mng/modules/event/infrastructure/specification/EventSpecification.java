@@ -23,10 +23,18 @@ public class EventSpecification {
             LocalDateTime startDate,
             LocalDateTime endDate,
             List<EventStatus> statuses,
-            Long categoryId) {
+            Long categoryId,
+            boolean onlySelling) {
         
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
+            LocalDateTime now = LocalDateTime.now();
+
+            // Lọc theo thời gian bán vé (nếu yêu cầu)
+            if (onlySelling) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("saleStartDate"), now));
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("saleEndDate"), now));
+            }
 
             // Lọc theo trạng thái (chỉ lấy sự kiện đang public)
             if (statuses != null && !statuses.isEmpty()) {

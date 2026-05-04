@@ -37,7 +37,9 @@ public class VoucherController {
     public ApiResponse<Page<VoucherResponse>> getAll(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        int safePage = Math.max(page, 1);
+        int safeSize = Math.max(size, 1);
+        PageRequest pageRequest = PageRequest.of(safePage - 1, safeSize, Sort.by("id").descending());
         return ApiResponse.<Page<VoucherResponse>>builder()
                 .result(voucherService.getAllVouchers(pageRequest))
                 .build();

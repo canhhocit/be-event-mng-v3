@@ -1,206 +1,178 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<style>
-    body{
-        margin:0;
-        padding:0;
-        background:#f4f4f4;
-        font-family:Arial, Helvetica, sans-serif;
-        color:#333;
-        line-height:1.6;
-    }
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
 
-    .container{
-        max-width:620px;
-        margin:20px auto;
-        background:#ffffff;
-        border:1px solid #dddddd;
-    }
+        .container {
+            max-width: 620px;
+            margin: 20px auto;
+            background: #ffffff;
+            border: 1px solid #dddddd;
+        }
 
-    .header{
-        padding:24px;
-        text-align:center;
-        border-bottom:1px solid #dddddd;
-    }
+        .header {
+            padding: 24px;
+            text-align: center;
+            border-bottom: 1px solid #dddddd;
+        }
 
-    .header h1{
-        margin:0;
-        font-size:24px;
-        color:#222;
-    }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #222;
+        }
 
-    .header p{
-        margin:6px 0 0;
-        font-size:14px;
-        color:#666;
-    }
+        .header p {
+            margin: 6px 0 0;
+            font-size: 14px;
+            color: #666;
+        }
 
-    .content{
-        padding:24px;
-    }
+        .content {
+            padding: 24px;
+        }
 
-    .section{
-        margin-bottom:28px;
-    }
+        .section {
+            margin-bottom: 28px;
+        }
 
-    .title{
-        font-size:20px;
-        font-weight:bold;
-        margin-bottom:12px;
-        color:#222;
-    }
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #222;
+        }
 
-    .sub-title{
-        font-size:18px;
-        font-weight:bold;
-        margin-bottom:12px;
-        color:#222;
-    }
+        .sub-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #222;
+        }
 
-    .box{
-        background:#fafafa;
-        border:1px solid #e5e5e5;
-        padding:16px;
-        margin:16px 0;
-    }
+        .box {
+            background: #fafafa;
+            border: 1px solid #e5e5e5;
+            padding: 16px;
+            margin: 16px 0;
+        }
 
-    .ticket{
-        display:inline-block;
-        width:45%;
-        margin:10px 2%;
-        border:1px solid #dddddd;
-        padding:14px;
-        text-align:center;
-        vertical-align:top;
-        box-sizing:border-box;
-    }
+        .ticket {
+            display: inline-block;
+            width: 45%;
+            margin: 10px 2%;
+            border: 1px solid #dddddd;
+            padding: 14px;
+            text-align: center;
+            vertical-align: top;
+            box-sizing: border-box;
+        }
 
-    .badge{
-        display:inline-block;
-        font-size:12px;
-        padding:4px 8px;
-        background:#f0f0f0;
-        color:#333;
-        margin-bottom:10px;
-    }
+        .badge {
+            display: inline-block;
+            font-size: 12px;
+            padding: 4px 8px;
+            background: #f0f0f0;
+            color: #333;
+            margin-bottom: 10px;
+        }
 
-    .qr{
-        width:130px;
-        height:130px;
-        margin:10px 0;
-    }
+        .qr {
+            width: 130px;
+            height: 130px;
+            margin: 10px 0;
+        }
 
-    .code{
-        font-family:monospace;
-        font-size:14px;
-        font-weight:bold;
-    }
+        .code {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: bold;
+        }
 
-    .footer{
-        border-top:1px solid #dddddd;
-        padding:18px;
-        text-align:center;
-        font-size:12px;
-        color:#777;
-    }
-</style>
+        .footer {
+            border-top: 1px solid #dddddd;
+            padding: 18px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="container">
+    <div class="container">
 
-    <!-- HEADER -->
-    <div class="header">
-        <h1>Event Hub</h1>
-        <p>Xác nhận đơn hàng / Order Confirmation</p>
-    </div>
-
-    <div class="content">
-
-        <div class="section">
-
-            <p>Chào bạn,</p>
-
-            <p>
-                Đơn hàng <strong>#[[${orderId}]]</strong> của bạn đã được thanh toán thành công.
-            </p>
-
-            <div class="box">
-                <p><strong>Tổng tiền:</strong> [[${totalAmount}]]đ</p>
-                <p><strong>Ngày đặt:</strong> [[${orderDate}]]</p>
-            </div>
-
-            <p>
-                Vui lòng xuất trình mã QR bên dưới tại quầy soát vé để vào cửa.
-            </p>
-
-            <p>
-                Hóa đơn chi tiết được đính kèm trong email này.
-            </p>
+        <!-- HEADER -->
+        <div class="header">
+            <h1>Event Hub</h1>
+            <p>Order Confirmation</p>
         </div>
 
-        <!-- ----------//// -->
-         <hr style="border: 1px solid #b24c4c;">
-        <div style="margin-top: 24px;" class="section">
-            <p>Dear Customer,</p>
+        <div class="content">
 
-            <p>
-                Your order <strong>#[[${orderId}]]</strong> has been paid successfully.
-            </p>
+            <div style="margin-top: 24px;" class="section">
+                <p>Dear Customer,</p>
+                <p>
+                    Your order <strong>#[[${orderId}]]</strong> has been paid successfully.
+                </p>
+                <div class="box">
+                    <p><strong>Total Amount:</strong> [[${totalAmount}]]đ</p>
+                    <p><strong>Order Date:</strong> [[${orderDate}]]</p>
+                </div>
 
-            <div class="box">
-                <p><strong>Total Amount:</strong> [[${totalAmount}]]đ</p>
-                <p><strong>Order Date:</strong> [[${orderDate}]]</p>
+                <p>
+                    Please present the QR code below at the check-in counter for entry.
+                </p>
+
+                <p>
+                    Detailed invoice is attached in this email.
+                </p>
             </div>
 
-            <p>
-                Please present the QR code below at the check-in counter for entry.
-            </p>
+            <!-- TICKETS -->
+            <div class="section">
+                <div class="sub-title">Vé điện tử / E-Tickets</div>
 
-            <p>
-                Detailed invoice is attached in this email.
-            </p>
-        </div>
+                <div th:each="ticket : ${tickets}" class="ticket">
 
-        <!-- TICKETS -->
-        <div class="section">
-            <div class="sub-title">Vé điện tử / E-Tickets</div>
+                    <div class="badge" th:text="${ticket.ticketType.name}">
+                        VIP
+                    </div>
 
-            <div th:each="ticket : ${tickets}" class="ticket">
+                    <div style="font-weight:bold; margin-bottom:10px;" th:text="${ticket.ticketType.event.name}">
+                        Tên sự kiện
+                    </div>
 
-                <div class="badge"
-                     th:text="${ticket.ticketType.name}">
-                    VIP
-                </div>
+                    <img th:src="${ticket.qrCode}" class="qr" alt="QR Code">
 
-                <div style="font-weight:bold; margin-bottom:10px;"
-                     th:text="${ticket.ticketType.event.name}">
-                    Tên sự kiện
-                </div>
+                    <div class="code" th:text="${ticket.ticketCode}">
+                        TKT-123456
+                    </div>
 
-                <img th:src="${ticket.qrCode}" class="qr" alt="QR Code">
-
-                <div class="code"
-                     th:text="${ticket.ticketCode}">
-                    TKT-123456
                 </div>
 
             </div>
 
         </div>
 
-    </div>
+        <div class="footer">
+            © 2026 Event Hub Team
+        </div>
 
-    <div class="footer">
-        © 2026 Event Hub Team
     </div>
-
-</div>
 
 </body>
-</html>
 
+</html>

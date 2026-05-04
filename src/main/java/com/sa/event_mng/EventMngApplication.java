@@ -19,5 +19,5 @@ public class EventMngApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(EventMngApplication.class, args);
 	}
-
+	
 }

@@ -26,7 +26,23 @@ public class PdfService {
             document.open();
 
             
-            BaseFont baseFont = BaseFont.createFont("C:/Windows/Fonts/Arial.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            BaseFont baseFont;
+            try {
+                // Thử tìm font Arial trên Windows hoặc Linux
+                String fontPath = "C:/Windows/Fonts/Arial.ttf";
+                if (!new java.io.File(fontPath).exists()) {
+                    fontPath = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"; // Linux
+                }
+                if (!new java.io.File(fontPath).exists()) {
+                    // Nếu không thấy font nào, dùng font mặc định (không hỗ trợ tiếng Việt tốt nhưng không gây crash)
+                    baseFont = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+                } else {
+                    baseFont = BaseFont.createFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                }
+            } catch (Exception e) {
+                baseFont = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+            }
+
             Font headerFont = new Font(baseFont, 22, Font.BOLD, java.awt.Color.BLACK);
             Font infoFont = new Font(baseFont, 11, Font.NORMAL, java.awt.Color.BLACK);
             Font headFont = new Font(baseFont, 11, Font.BOLD, java.awt.Color.BLACK);

@@ -1,201 +1,81 @@
-# Tài liệu - DDD
+# EventHub RESTFUL API
 
-## 1. Danh sách các Bảng và Thuộc tính
 
-### Module: Identity
-*   **users**: Quản lý thông tin tài khoản người dùng (Admin, Organizer, Staff, Customer).
-    *   `id` (PK): Long
-    *   `username`: String (Unique)
-    *   `email`: String
-    *   `password`: String
-    *   `full_name`: String
-    *   `phone`: String
-    *   `address`: String
-    *   `enabled`: Boolean
-    *   `verification_token`: String
-    *   `otp`: String
-    *   `otp_expiry`: LocalDateTime
-    *   `organizer_id` (FK): Liên kết Staff với Organizer.
-    *   `created_at`, `updated_at`: Metadata.
-*   **roles**: Phân quyền hệ thống.
-    *   `name` (PK): String (ADMIN, ORGANIZER, STAFF, CUSTOMER)
-    *   `description`: String
-*   **permissions**: Các quyền chi tiết.
-    *   `name` (PK): String
-    *   `description`: String
-*   **invalidated_tokens**: Lưu vết các token đã đăng xuất.
-    *   `id` (PK): String (JTI)
-    *   `expiry_time`: Date
+## 🛠️ Tech Stack
 
-### Module: Event
-*   **categories**: Danh mục sự kiện.
-    *   `id` (PK): Long
-    *   `name`: String
-    *   `description`: String
-*   **events**: Thông tin chi tiết sự kiện.
-    *   `id` (PK): Long
-    *   `name`: String
-    *   `category_id` (FK): Liên kết danh mục.
-    *   `organizer_id` (FK): Người sở hữu sự kiện.
-    *   `location`: Địa chỉ cụ thể.
-    *   `province`: Tỉnh/Thành phố (dùng để lọc).
-    *   `start_time`, `end_time`: Thời gian diễn ra.
-    *   `sale_start_date`, `sale_end_date`: Thời gian bán vé.
-    *   `description`: TEXT (Mô tả chi tiết).
-    *   `status`: Enum (PENDING, UPCOMING, OPENING, CLOSED, COMPLETED, CANCELLED).
-*   **event_images**: Ảnh mô tả sự kiện.
-    *   `id` (PK): Long
-    *   `event_id` (FK)
-    *   `image_url`: String
-*   **ticket_types**: Cấu hình loại vé (VIP, Standard...).
-    *   `id` (PK): Long
-    *   `event_id` (FK)
-    *   `name`: String
-    *   `price`: BigDecimal
-    *   `total_quantity`: Integer
-    *   `remaining_quantity`: Integer (Theo dõi tồn kho).
-    *   `description`: String
-
-### Module: Ordering (Giỏ hàng & Đơn hàng)
-*   **carts**: Giỏ hàng tạm thời.
-    *   `id` (PK): Long
-    *   `customer_id` (FK): Mỗi customer có 1 giỏ hàng.
-    *   `status`: Enum (ACTIVE, COMPLETED, ABANDONED).
-*   **cart_items**: Chi tiết vé trong giỏ.
-    *   `id` (PK): Long
-    *   `cart_id` (FK)
-    *   `ticket_type_id` (FK)
-    *   `quantity`: Integer
-*   **orders**: Thông tin đơn hàng đã thanh toán.
-    *   `id` (PK): Long
-    *   `customer_id` (FK)
-    *   `total_amount`: BigDecimal (Tổng tiền khách phải trả).
-    *   `discount_amount`: BigDecimal (Tiền giảm giá).
-    *   `platform_fee_rate`: Float (Phần trăm tiền phí sàn Admin thu của Organizer).
-    *   `service_fee`: BigDecimal (Tiền phí sàn Admin nhận được).
-    *   `organizer_amount`: BigDecimal (Tiền BTC nhận được).
-    *   `voucher_code`: String
-    *   `payment_method`: Enum
-    *   `payment_status`: Enum
-    *   `order_status`: Enum
-    *   `order_date`, `paid_at`: Thời gian.
-*   **order_items**: Chi tiết vé trong đơn hàng.
-    *   `id` (PK): Long
-    *   `order_id` (FK)
-    *   `ticket_type_id` (FK)
-    *   `quantity`: Integer
-    *   `unit_price`: BigDecimal
-
-### Module: Ticketing (Vé điện tử)
-*   **tickets**: Vé điện tử (Digital Ticket) được sinh ra sau khi Order thành công.
-    *   `id` (PK): Long
-    *   `order_id` (FK)
-    *   `ticket_type_id` (FK)
-    *   `ticket_code`: String (Unique - Dùng để check-in).
-    *   `qr_code`: String (Link ảnh/data QR).
-    *   `status`: Enum (VALID, USED, EXPIRED).
-    *   `used_at`: LocalDateTime.
-
-### Module: Marketing
-*   **vouchers**: Mã giảm giá.
-    *   `id` (PK): Long
-    *   `code`: String (Unique)
-    *   `amount`: BigDecimal
-    *   `discount_type`: Enum (PERCENTAGE, AMOUNT)
-    *   `min_order_amount`: BigDecimal
-    *   `max_discount`: BigDecimal
-    *   `start_date`, `end_date`: Hiệu lực.
-    *   `quantity`: Integer
-    *   `event_id` (FK): Null nếu là Voucher toàn sàn.
-    *   `creator_id` (FK): Admin hoặc Organizer.
-
+### Công nghệ
+- **Java 17 + Spring Boot 3.4.5**
+- **Spring Security + JWT**: Bảo mật và phân quyền đa lớp (RBAC).
+- **Spring Data JPA + MySQL**: Quản trị dữ liệu quan hệ và hiệu năng truy vấn.
+- **MapStruct & Lombok**: Tối ưu hóa code và mapping dữ liệu DTO.
+- **Swagger (OpenAPI)**: Tài liệu hóa API chuyên nghiệp.
+- **Integrations**: PayOS (VietQR), Brevo (Email API), iText (PDF Generation).
 
 ---
 
-## 2. Quan hệ giữa các Thuộc tính
+## ✨ Tính năng chính
 
-*   **User & Role**: Many-to-Many (Một người có thể có nhiều Role và ngược lại).
-*   **Event & Category**: Many-to-One (Nhiều sự kiện thuộc 1 danh mục).
-*   **Event & EventImage**: One-to-Many (1 sự kiện có nhiều ảnh mô tả).
-*   **Event & TicketType**: One-to-Many (1 sự kiện có nhiều loại vé khác nhau).
-*   **Order & OrderItem**: One-to-Many (1 đơn hàng có nhiều loại vé).
-*   **Order & Ticket**: One-to-Many (1 đơn hàng sinh ra nhiều vé điện tử tương ứng với số lượng mua).
-*   **Organizer & Staff**: One-to-Many (Một Organizer quản lý nhiều nhân viên soát vé thông qua `organizer_id` trong bảng `users`).
-*   **Voucher & Event**: Many-to-One (Voucher có thể áp dụng cho 1 sự kiện cụ thể hoặc toàn bộ hệ thống).
+### 🔐 Authentication & Identity
+- **Đăng ký/Đăng nhập**: Nhận JWT token, xác thực tài khoản qua Email & OTP.
+- **Phân quyền**: Quản lý 4 vai trò chính: `ADMIN`, `ORGANIZER`, `STAFF`, `CUSTOMER`.
+
+### 📅 Event Management
+- **Quản lý sự kiện**: Thêm/Sửa/Xóa và duyệt sự kiện công khai.
+- **Ticket Inventory**: Quản lý đa dạng hạng vé (VIP/Thường) và tồn kho thời gian thực.
+- **Tìm kiếm**: Công cụ tìm kiếm và lọc sự kiện theo địa điểm, tên và khoảng giá.
+
+### 🛒 Cart & Ordering
+- **Giỏ hàng**: Quản lý giỏ hàng riêng biệt cho từng khách hàng.
+- **Checkout**: Xử lý logic đặt hàng, kiểm tra tính hợp lệ và trừ tồn kho vé.
+
+### 💳 Payment & Fulfillment
+- **Thanh toán trực tuyến**: Tích hợp cổng thanh toán **PayOS (VietQR)** và **MoMo**.
+- **Tự động hóa**: Xử lý Webhook ngân hàng, tự động sinh vé QR Code, xuất hóa đơn PDF và gửi Email xác nhận ngay lập tức.
+
+### 📊 Statistics & Marketing
+- **Voucher**: Hệ thống mã giảm giá theo số tiền hoặc phần trăm.
+- **Dashboard**: Thống kê doanh thu và báo cáo hiệu quả bán vé cho Admin/Organizer.
 
 ---
 
-## 3. Cấu trúc thư mục Kiến trúc hướng miền (DDD)
+## 🚀 Hướng dẫn chạy project
 
-Sơ đồ kiến trúc tổng quan:
-![DDD Diagram](DDD.png)
+### Yêu cầu
+- Java 17+
+- MySQL 8.0
+- Maven
 
-Sắp xếp theo Bounded Contexts để tách biệt nghiệp vụ:
-
-```text
-src/main/java/com/sa/event_mng
-├── modules
-│   ├── identity          (Identity & Access Context)
-│   │   ├── domain        (Entities, Aggregates, Repository Interfaces, Domain Services)
-│   │   ├── application   (Use Cases, DTOs, Application Services)
-│   │   └── infrastructure (Persistence Repositories, Security Config)
-│   ├── event             (Event Context)
-│   │   ├── domain
-│   │   ├── application
-│   │   └── infrastructure
-│   ├── ordering          (Order & Cart Context)
-│   │   ├── domain
-│   │   ├── application
-│   │   └── infrastructure
-│   ├── ticketing         (Digital Ticket Context)
-│   │   ├── domain
-│   │   ├── application
-│   │   └── infrastructure
-│   └── marketing         (Promotion & Voucher Context)
-│       ├── domain
-│       ├── application
-│       └── infrastructure
-├── shared
-│   ├── domain            (BaseEntity, ValueObjects dùng chung)
-│   ├── dto               (ApiResponse, Global DTOs)
-│   ├── exception         (Global Exception Handling)
-│   └── infrastructure    (Email, PDF, Cloudinary)
-│       └── config        (General Technical Configs)
+### Cấu hình `application.yml`
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/event_mng
+spring.datasource.username=root
+spring.datasource.password=your_password
+jwt.signerKey=your_secret_key
+payos.clientId=your_payos_id
 ```
 
-### Cấu trúc chuẩn cho một Module:
-```text
-com.sa.event_mng.modules.[module_name]
-├── presentation            (Tầng Giao diện - User Interface)
-│   └── controller          (Nơi chứa @RestController, nhận HTTP Request)
-├── application             (Tầng Ứng dụng - Application Layer)
-│   ├── service             (Điều phối nghiệp vụ, quản lý @Transactional)
-│   ├── dto                 (Data Transfer Objects: Request/Response)
-│   └── mapper              (Chuyển đổi Entity <-> DTO, ví dụ: MapStruct)
-├── domain                  (Tầng Nghiệp vụ lõi - Trái tim của module)
-│   ├── model               (Chứa Entities, Enums, Value Objects)
-│   └── repository          (Chứa các INTERFACE của Repository)
-└── infrastructure          (Tầng Hạ tầng - Infrastructure Layer)
-    ├── security            (Cấu hình bảo mật đặc thù như SecurityConfig, JwtDecoder)
-    ├── persistence         (Cài đặt chi tiết Repository nếu cần)
-    └── config              (Các cấu hình kỹ thuật khác)
+### Chạy ứng dụng
+```bash
+mvn spring-boot:run
+```
+
+### Xem API docs (Swagger UI)
+```
+http://localhost:8080/swagger-ui/index.html
 ```
 
 ---
 
-## 4. Tình trạng dự án
+## 📁 Cấu trúc thư mục (Modular Monolith)
 
-### ĐÃ HOÀN THÀNH:
-*   **Module hóa thực tế**: Dự án đã được chia thành **5 module vật lý** chính xác theo cấu trúc DDD:
-    1.  `identity`: Quản lý định danh và bảo mật.
-    2.  `event`: Quản lý sự kiện (Bao gồm cả **Ticket & Inventory** - hạng vé và số lượng).
-    3.  `ordering`: Quản lý giỏ hàng và quy trình đặt hàng/thanh toán.
-    4.  `ticketing`: Quản lý vé điện tử sau thanh toán.
-    5.  `marketing`: Quản lý khuyến mãi và voucher.
-*   **Shared Kernel**: Đã quy hoạch xong folder `shared` cho Exception, Config, DTO và BaseEntity.
-
-### CHƯA LÀM / CẦN CẢI THIỆN:
-*   **Viết lại Seeders**: Hệ thống tạo dữ liệu mẫu (`faker`) đang tạm dừng (đang lười seed).
-*   **Dọn dẹp folder gốc**: Các folder cũ (`service`, `repository`...) ở root cần được xóa hẳn (Delete) để tránh nhầm lẫn.
-*   **Enums đặc thù**: Đưa các Enum từ `model.enums` về đúng domain module (VD: `EventStatus` về `event`) để tăng tính đóng gói.
-*   **File Storage**: Triển khai chính thức dịch vụ upload ảnh (Cloudinary) trong tầng shared.
+```text
+src/main/java/com/sa/event_mng/
+├── modules/
+│   ├── identity/     # Xác thực & Quản lý người dùng
+│   ├── event/        # Quản lý sự kiện & Hạng vé
+│   ├── ordering/     # Giỏ hàng & Thanh toán
+│   ├── ticketing/    # Vé điện tử & QR Code
+│   ├── marketing/    # Voucher & Khuyến mãi
+│   └── blog/         # Tin tức & Hướng dẫn
+└── shared/           # Cấu hình dùng chung (Exception, Email, PDF...)
+```

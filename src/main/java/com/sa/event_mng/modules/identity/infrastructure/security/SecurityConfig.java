@@ -30,7 +30,8 @@ public class SecurityConfig {
       "/auth/refresh",
       "/auth/introspect",
       "/auth/forgot-password",
-      "/auth/reset-password"
+      "/auth/reset-password",
+      "/api/v1/payments/payos-webhook"
   };
 
   private final String[] PUBLIC_GET_ENDPOINTS = {
@@ -38,11 +39,14 @@ public class SecurityConfig {
       "/categories/**",
       "/events/**",
       "/blog/**",
+      "/api/v1/payments/payos-webhook",
+      "/api/v1/payments/redirect",
       "/images/**",
       "/v3/api-docs/**",
       "/swagger-ui/**",
       "/swagger-ui.html",
-      "/vouchers/**"
+      "/vouchers/**",
+      "/error"
   };
 
   @Value("${application.security.jwt.secret-key}")

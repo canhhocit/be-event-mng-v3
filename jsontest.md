@@ -181,10 +181,15 @@ Sử dụng tài liệu này để kiểm thử hệ thống qua Postman. Tất 
 - 🔒 Yêu cầu token
 - **paymentMethod:** `MOMO` | `VNPAY` | `BANKING`
 - **voucherCode** (optional): `?voucherCode=SUMMER10`
+- **platform** (optional, default: `web`): `?platform=web` hoặc `?platform=mobile`
+  - **Web Frontend**: `/bookings/checkout?paymentMethod=PAYOS`
+  - **Mobile App**: `/bookings/checkout?paymentMethod=PAYOS&platform=mobile` ⭐ **PHẢI GỬI platform=mobile**
 
 ### 💳 Thanh toán các mục được chọn
 - **POST** `/bookings/checkout-selected?paymentMethod=BANKING`
 - 🔒 Yêu cầu token
+- **platform** (optional, default: `web`): `?platform=web` hoặc `?platform=mobile`
+  - **Mobile App**: `/bookings/checkout-selected?paymentMethod=PAYOS&platform=mobile` ⭐ **PHẢI GỬI platform=mobile**
 ```json
 [1, 2, 3]
 ```
