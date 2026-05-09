@@ -10,10 +10,16 @@ import java.time.LocalDateTime;
 @Builder
 public class TicketResponse {
     private Long id;
+
+    // Tên sự kiện và loại vé.
     private String eventName;
     private String ticketTypeName;
+
+    // Mã vé và QR code dùng để check-in.
     private String ticketCode;
     private String qrCode;
+
+    // Trạng thái vé (VALID, USED, ...)
     private TicketStatus status;
     private LocalDateTime usedAt;
 }

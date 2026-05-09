@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Đơn hàng", description = "Thanh toán và xem lịch sử mua vé")
 public class OrderController {
 
+    // Dịch vụ xử lý đơn hàng
     OrderService orderService;
 
     @PostMapping("/checkout")
@@ -29,6 +30,7 @@ public class OrderController {
             @RequestParam PaymentMethod paymentMethod,
             @RequestParam(required = false) String voucherCode,
             @RequestParam(defaultValue = "web") String platform) {
+        // Thanh toán toàn bộ giỏ hàng hiện tại của user
         return ApiResponse.<OrderResponse>builder()
                 .result(orderService.checkout(paymentMethod, voucherCode, platform))
                 .build();
@@ -37,10 +39,11 @@ public class OrderController {
     @PostMapping("/checkout-selected")
     @Operation(summary = "Thanh toán các mục được chọn trong giỏ hàng")
     public ApiResponse<OrderResponse> checkoutSelected(
-            @RequestBody java.util.List<Long> itemIds, 
+            @RequestBody java.util.List<Long> itemIds,
             @RequestParam PaymentMethod paymentMethod,
             @RequestParam(required = false) String voucherCode,
             @RequestParam(defaultValue = "web") String platform) {
+        // Thanh toán chỉ những mục đã chọn trong giỏ hàng
         return ApiResponse.<OrderResponse>builder()
                 .result(orderService.checkoutSelected(itemIds, paymentMethod, voucherCode, platform))
                 .build();
@@ -59,6 +62,7 @@ public class OrderController {
     @PostMapping("/cancel-and-restore-cart")
     @Operation(summary = "Hủy đơn hàng và hoàn tác các mục về giỏ hàng")
     public ApiResponse<Void> cancelAndRestoreCart(@RequestParam Long orderCode) {
+        // Hủy đơn hàng khi khách muốn trả hàng và chuyển lại items về giỏ hàng.
         orderService.cancelAndRestoreCart(orderCode);
         return ApiResponse.<Void>builder()
                 .message("Đã hoàn tác giỏ hàng")
@@ -69,6 +73,7 @@ public class OrderController {
     @Operation(summary = "Xem lịch sử đơn hàng của tôi")
     public ApiResponse<Page<OrderResponse>> getMyOrders(@RequestParam(defaultValue = "1") int page,
                                                         @RequestParam(defaultValue = "10") int size) {
+        // Lấy trang danh sách đơn hàng của user.
         PageRequest pageRequest = PageRequest.of(
                 page - 1, size,
                 Sort.by("createdAt").descending());

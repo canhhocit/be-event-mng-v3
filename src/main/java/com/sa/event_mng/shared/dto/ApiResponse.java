@@ -16,7 +16,10 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
+  // Mã trả về chung, có thể dùng để phân biệt success/error.
   @Builder.Default int code = 1000;
+  // Thông điệp mô tả kết quả hoặc lỗi.
   String message;
+  // Dữ liệu trả về thực tế.
   T result;
 }

@@ -8,6 +8,7 @@ import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface TicketMapper {
+    // Chuyển Ticket entity sang TicketResponse DTO.
     @Mapping(target = "eventName", source = "ticketType.event.name")
     @Mapping(target = "ticketTypeName", source = "ticketType.name")
     TicketResponse toTicketResponse(Ticket ticket);

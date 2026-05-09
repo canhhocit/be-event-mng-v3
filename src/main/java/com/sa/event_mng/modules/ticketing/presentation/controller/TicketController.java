@@ -19,11 +19,13 @@ import java.util.List;
 @Tag(name = "Vé điện tử", description = "Xem vé và thực hiện check-in")
 public class TicketController {
 
+    // Dịch vụ xử lý logic vé
     TicketService ticketService;
 
     @GetMapping("/my-tickets")
     @Operation(summary = "Xem danh sách vé đã mua")
     public ApiResponse<List<TicketResponse>> getMyTickets() {
+        // Gọi service trả về danh sách vé của người dùng hiện tại
         return ApiResponse.<List<TicketResponse>>builder()
                 .result(ticketService.getMyTickets())
                 .build();
@@ -32,6 +34,7 @@ public class TicketController {
     @PostMapping("/check-in")
     @Operation(summary = "Quét mã vé để check-in (Chỉ Ban tổ chức/Admin)")
     public ApiResponse<TicketResponse> checkIn(@RequestParam String ticketCode) {
+        // Gọi service kiểm tra và đổi trạng thái vé khi check-in
         return ApiResponse.<TicketResponse>builder()
                 .result(ticketService.checkIn(ticketCode))
                 .build();

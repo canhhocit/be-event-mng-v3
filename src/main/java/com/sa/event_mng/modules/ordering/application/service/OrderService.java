@@ -40,6 +40,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Dịch vụ xử lý đơn hàng (Order) và luồng thanh toán.
+ * OrderService chuyển giỏ hàng thành đơn hàng, xử lý thanh toán, tạo vé, gửi email và quản lý trạng thái đơn.
+ */
 @Service
 @lombok.extern.slf4j.Slf4j
 public class OrderService {
@@ -55,15 +59,15 @@ public class OrderService {
     private final PdfService pdfService;
     private final PaymentService paymentService;
 
-    public OrderService(OrderRepository orderRepository, 
-                        CartRepository cartRepository, 
-                        UserRepository userRepository, 
-                        TicketRepository ticketRepository, 
-                        TicketTypeRepository ticketTypeRepository, 
-                        OrderMapper orderMapper, 
-                        EmailService emailService, 
-                        VoucherService voucherService, 
-                        PdfService pdfService, 
+    public OrderService(OrderRepository orderRepository,
+                        CartRepository cartRepository,
+                        UserRepository userRepository,
+                        TicketRepository ticketRepository,
+                        TicketTypeRepository ticketTypeRepository,
+                        OrderMapper orderMapper,
+                        EmailService emailService,
+                        VoucherService voucherService,
+                        PdfService pdfService,
                         PaymentService paymentService) {
         this.orderRepository = orderRepository;
         this.cartRepository = cartRepository;
@@ -93,6 +97,7 @@ public class OrderService {
             throw new AppException(ErrorCode.CART_EMPTY);
         }
 
+        // Tạo đơn hàng từ toàn bộ giỏ hàng
         return createOrderFromItems(user, cart.getItems(), paymentMethod, cart, voucherCode, platform);
     }
 
@@ -113,6 +118,7 @@ public class OrderService {
             throw new AppException(ErrorCode.CART_EMPTY);
         }
 
+        // Tạo đơn hàng từ các mục được chọn trong giỏ hàng
         return createOrderFromItems(user, selectedItems, paymentMethod, cart, voucherCode, platform);
     }
 
@@ -145,6 +151,7 @@ public class OrderService {
         BigDecimal serviceFee = totalAmount.multiply(platformFeeRate);
         BigDecimal organizerAmount = totalAmount.subtract(serviceFee);
 
+        // Tạo đối tượng Order ban đầu với trạng thái PENDING
         Order order = Order.builder()
                 .customer(user)
                 .orderCode(System.currentTimeMillis() % 1000000000L)
@@ -176,7 +183,7 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
         OrderResponse response = orderMapper.toOrderResponse(savedOrder);
 
-        // Simulation for MoMo: Complete immediately
+        // Với MoMo, giả lập hoàn tất luôn sau khi tạo đơn
         if (paymentMethod == PaymentMethod.MOMO) {
             this.completePayment(savedOrder.getId());
             response.setPaymentUrl("/payment/success?orderCode=" + savedOrder.getOrderCode());
@@ -274,7 +281,7 @@ public class OrderService {
     private void processCompletion(Order order) {
         log.info("DEBUG: [ORDER_PROCESS] Starting completion for OrderID: {}, OrderCode: {}", order.getId(), order.getOrderCode());
         
-        // Tránh xử lý lặp nếu đã PAID
+        // Nếu đơn hàng đã thanh toán thì không xử lý lại
         if (order.getPaymentStatus() == PaymentStatus.PAID) {
             log.warn("DEBUG: [ORDER_PROCESS] Order {} is ALREADY PAID. Skipping.", order.getOrderCode());
             return;
@@ -311,10 +318,7 @@ public class OrderService {
             }
             orderRepository.save(order);
 
-            // Fetch order with Customer to avoid LazyInitializationException
             Order fullOrder = orderRepository.findByIdWithCustomer(order.getId()).orElse(order);
-            
-            // Đảm bảo nạp Tickets (do đang trong Transaction nên có thể gọi trực tiếp)
             if (fullOrder.getTickets() != null) fullOrder.getTickets().size(); 
             
             if (fullOrder.getCustomer().getEmail() != null) {
@@ -350,7 +354,6 @@ public class OrderService {
         Page<Order> orderPage = orderRepository.findByCustomerId(user.getId(), pageRequest);
         return orderPage.map(order -> {
             OrderResponse response = orderMapper.toOrderResponse(order);
-            // Nếu là PENDING và dùng PAYOS, ta tạo link mới để khách có thể tiếp tục thanh toán
             if (order.getPaymentStatus() == PaymentStatus.PENDING && order.getPaymentMethod() == PaymentMethod.PAYOS) {
                 try {
                     response.setPaymentUrl(paymentService.createPayOSPaymentLink(order, "web"));

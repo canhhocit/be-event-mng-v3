@@ -9,9 +9,11 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class CartItemRequest {
+    // Mã loại vé cần thêm vào giỏ hàng.
     @NotNull(message = "UNCATEGORIZED_EXCEPTION")
     private Long ticketTypeId;
 
+    // Số lượng vé muốn mua.
     @Min(value = 1, message = "UNCATEGORIZED_EXCEPTION")
     private Integer quantity;
 }

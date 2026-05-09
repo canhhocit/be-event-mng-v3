@@ -19,11 +19,14 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Giỏ hàng", description = "Quản lý giỏ hàng của người dùng")
 public class CartController {
 
+    // Dịch vụ xử lý logic giỏ hàng
     CartService cartService;
 
     @PostMapping("/add")
     @Operation(summary = "Thêm vé vào giỏ hàng")
     public ApiResponse<CartResponse> addToCart(@RequestBody @Valid CartItemRequest request) {
+        // Thêm vé vào giỏ hàng của user hiện tại.
+        // Request body chứa ticketTypeId và số lượng.
         return ApiResponse.<CartResponse>builder()
                 .result(cartService.addToCart(request))
                 .build();
@@ -32,6 +35,7 @@ public class CartController {
     @GetMapping
     @Operation(summary = "Xem giỏ hàng của tôi")
     public ApiResponse<CartResponse> getMyCart() {
+        // Lấy thông tin giỏ hàng của user đang đăng nhập.
         return ApiResponse.<CartResponse>builder()
                 .result(cartService.getMyCart())
                 .build();
@@ -40,6 +44,7 @@ public class CartController {
     @PutMapping("/items/{itemId}")
     @Operation(summary = "Cập nhật số lượng vé trong giỏ")
     public ApiResponse<CartResponse> updateQuantity(@PathVariable Long itemId, @RequestParam Integer quantity) {
+        // Cập nhật số lượng của item trong giỏ, nếu quantity <= 0 thì xóa item.
         return ApiResponse.<CartResponse>builder()
                 .result(cartService.updateQuantity(itemId, quantity))
                 .build();
@@ -48,6 +53,7 @@ public class CartController {
     @DeleteMapping("/items/{itemId}")
     @Operation(summary = "Xóa vé khỏi giỏ hàng")
     public ApiResponse<CartResponse> removeItem(@PathVariable Long itemId) {
+        // Xóa 1 item khỏi giỏ hàng theo itemId.
         return ApiResponse.<CartResponse>builder()
                 .result(cartService.removeItem(itemId))
                 .build();
@@ -56,6 +62,7 @@ public class CartController {
     @DeleteMapping("/clear")
     @Operation(summary = "Xóa toàn bộ giỏ hàng")
     public ApiResponse<Void> clearCart() {
+        // Xóa toàn bộ các item trong giỏ hàng.
         cartService.clearCart();
         return ApiResponse.<Void>builder().build();
     }

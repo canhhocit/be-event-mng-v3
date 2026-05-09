@@ -20,6 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Dịch vụ xử lý logic liên quan đến vé (Ticket).
+ * Controller gọi vào service này để thực hiện các nghiệp vụ như xem vé của user hoặc check-in vé.
+ */
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -29,14 +33,23 @@ public class TicketService {
     UserRepository userRepository;
     TicketMapper ticketMapper;
 
+    /**
+     * Lấy danh sách vé đã mua của user đang đăng nhập.
+     */
     public List<TicketResponse> getMyTickets() {
         User user = getCurrentUser();
         return ticketRepository.findAll().stream()
+                // Lọc ra các vé thuộc đơn hàng của user hiện tại
                 .filter(t -> t.getOrder().getCustomer().getId().equals(user.getId()))
+                // Chuyển entity Ticket sang DTO trả về client
                 .map(ticketMapper::toTicketResponse)
                 .toList();
     }
 
+    /**
+     * Check-in vé dựa trên mã vé ticketCode.
+     * Chỉ ADMIN, ORGANIZER hoặc STAFF mới có thể gọi.
+     */
     @Transactional
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER') or hasRole('STAFF')")
     public TicketResponse checkIn(String ticketCode) {
@@ -51,12 +64,15 @@ public class TicketService {
 
         Long eventOrganizerId = ticket.getTicketType().getEvent().getOrganizer().getId();
 
+        // Nếu không phải admin thì kiểm tra quyền dựa trên vai trò
         if (!isAdmin) {
             if (isStaff) {
+                // Staff chỉ được check-in vé của ban tổ chức mình
                 if (user.getOrganizer() == null || !user.getOrganizer().getId().equals(eventOrganizerId)) {
                     throw new AppException(ErrorCode.UNAUTHORIZED);
                 }
             } else {
+                // Organizer chỉ được check-in vé của chính mình
                 if (!user.getId().equals(eventOrganizerId)) {
                     throw new AppException(ErrorCode.TICKET_NOT_OWNED);
                 }
@@ -74,9 +90,13 @@ public class TicketService {
         ticket.setStatus(TicketStatus.USED);
         ticket.setUsedAt(LocalDateTime.now());
 
+        // Lưu lại trạng thái vé đã sử dụng và trả về thông tin vé
         return ticketMapper.toTicketResponse(ticketRepository.save(ticket));
     }
 
+    /**
+     * Lấy thông tin user hiện tại từ Spring Security.
+     */
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByUsername(username)

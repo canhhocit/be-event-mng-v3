@@ -12,14 +12,23 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class OrderResponse {
+    // Id đơn hàng (UUID dạng chuỗi)
     private String id;
+
+    // Số tiền sau khi trừ phí dịch vụ / phí nền tảng, tổ chức thu được.
     private BigDecimal organizerAmount; // tổng tiền btc ăn
-    private Float platformFeeRate;  //phần trăm tiền admin ăn
-    private BigDecimal serviceFee;  //tổng tiền admin ăn
-    private BigDecimal totalAmount; //tổng tiền khách phải trả
+    private Float platformFeeRate;  // phần trăm tiền admin ăn
+    private BigDecimal serviceFee;  // tổng tiền admin ăn
+    private BigDecimal totalAmount; // tổng tiền khách phải trả
+
+    // Thông tin thanh toán.
     private PaymentMethod paymentMethod;
     private PaymentStatus paymentStatus;
     private OrderStatus orderStatus;
+
+    // Thời điểm tạo đơn.
     private LocalDateTime orderDate;
+
+    // Link thanh toán nếu dùng PAYOS hoặc MoMo.
     private String paymentUrl;
 }

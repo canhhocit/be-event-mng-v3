@@ -7,6 +7,9 @@ import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
+    // Mã lỗi chung dùng trong toàn bộ ứng dụng.
+    // Mỗi ErrorCode chứa mã số, thông điệp trả về và HTTP status tương ứng.
+    // Khi AppException được ném, GlobalExceptionHandler có thể đọc ErrorCode này để trả về response phù hợp.
     // General errors
     KEY_INVALID(1001, "Uncategorize error", HttpStatus.BAD_REQUEST),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorize exception", HttpStatus.INTERNAL_SERVER_ERROR),

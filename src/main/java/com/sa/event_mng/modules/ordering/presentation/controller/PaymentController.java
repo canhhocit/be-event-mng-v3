@@ -26,6 +26,7 @@ import com.sa.event_mng.modules.ordering.application.service.OrderService;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PaymentController {
 
+    // Dịch vụ xử lý logic thanh toán và redirect
     OrderService orderService;
 
     @org.springframework.beans.factory.annotation.Value("${app.payment.deep-link.scheme}")
@@ -40,6 +41,8 @@ public class PaymentController {
     @lombok.experimental.NonFinal
     String deepLinkPath;
 
+    // Chuẩn hóa trạng thái trả về từ PayOS / frontend.
+    // Ví dụ "paid", "success" đều được xử lý thành "success".
     private String normalizeStatus(String status) {
         if (status == null) {
             return "success";
@@ -55,6 +58,7 @@ public class PaymentController {
 
     @org.springframework.web.bind.annotation.GetMapping("/payos-webhook")
     public String validateWebhook() {
+        // Endpoint kiểm tra xem webhook PayOS đã hoạt động chưa.
         return "Webhook is active!";
     }
 
@@ -69,6 +73,7 @@ public class PaymentController {
         try {
             String normalizedStatus = normalizeStatus(status);
 
+            // Nếu trạng thái thanh toán thành công, gọi hoàn tất thanh toán.
             if ("success".equals(normalizedStatus)) {
                 CompletableFuture.runAsync(() -> {
                     try {
@@ -79,6 +84,7 @@ public class PaymentController {
                     }
                 });
             } else if ("cancel".equals(normalizedStatus)) {
+                // Nếu khách hủy, gọi hủy đơn và trả về giỏ hàng.
                 CompletableFuture.runAsync(() -> {
                     try {
                         orderService.cancelPaymentByOrderCode(orderCode);
@@ -91,11 +97,11 @@ public class PaymentController {
 
             String finalUrl;
             if ("web".equalsIgnoreCase(platform)) {
-                // Redirect back to Web Frontend
+                // Redirect trở lại web frontend sau khi thanh toán hoặc hủy.
                 String subPath = "success".equals(normalizedStatus) ? "/payment/success" : "/payment/cancel";
                 finalUrl = frontendUrl + subPath + "?orderCode=" + orderCode;
             } else {
-                // Redirect to Mobile Deep Link
+                // Redirect tới mobile deep link.
                 String normalizedPath = deepLinkPath.startsWith("/") ? deepLinkPath : "/" + deepLinkPath;
                 finalUrl = deepLinkScheme + "://" + deepLinkHost + normalizedPath + "?orderCode=" + orderCode + "&status=" + normalizedStatus;
             }
@@ -110,6 +116,8 @@ public class PaymentController {
 
     @PostMapping("/payos-webhook")
     public void handlePayOSWebhook(@RequestBody Map<String, Object> body) {
+        // Webhook PayOS gọi vào endpoint này sau khi thanh toán thành công bên PayOS.
+        // Body JSON chứa trường "data" với orderCode.
         try {
             System.out.println("DEBUG: [WEBHOOK] Received call from PayOS. Body: " + body);
             

@@ -27,6 +27,10 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Optional;
 
+/**
+ * Dịch vụ xử lý logic giỏ hàng (Cart).
+ * Module này quản lý thêm/xóa/cập nhật số lượng vé trong giỏ hàng của khách hàng.
+ */
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -41,7 +45,7 @@ public class CartService {
     @Transactional
     public CartResponse addToCart(CartItemRequest request) {
         User user = getCurrentUser();
-        log.info("Adding to cart: User={}, TicketType={}, Quantity={}", 
+        log.info("Adding to cart: User={}, TicketType={}, Quantity={}",
                 user.getUsername(), request.getTicketTypeId(), request.getQuantity());
 
         if (request.getQuantity() == null || request.getQuantity() <= 0) {
@@ -58,13 +62,12 @@ public class CartService {
         TicketType ticketType = ticketTypeRepository.findById(request.getTicketTypeId())
                 .orElseThrow(() -> new AppException(ErrorCode.TICKET_TYPE_NOT_FOUND));
 
-        // check event status
+        // Nếu sự kiện không đang mở bán, không được thêm vào giỏ hàng
         if (ticketType.getEvent().getStatus() != EventStatus.OPENING) {
             log.warn("Event is not OPENING: EventId={}", ticketType.getEvent().getId());
             throw new AppException(ErrorCode.EVENT_NOT_OPENING);
         }
 
-        // check stock
         Optional<CartItem> existingItem = cart.getItems().stream()
                 .filter(item -> item.getTicketType().getId().equals(request.getTicketTypeId()))
                 .findFirst();
@@ -72,16 +75,16 @@ public class CartService {
         int currentInCart = existingItem.map(CartItem::getQuantity).orElse(0);
         int totalQuantityRequested = currentInCart + request.getQuantity();
 
-        log.info("Stock check: Remaining={}, InCart={}, RequestedNew={}, TotalRequested={}", 
+        log.info("Stock check: Remaining={}, InCart={}, RequestedNew={}, TotalRequested={}",
                 ticketType.getRemainingQuantity(), currentInCart, request.getQuantity(), totalQuantityRequested);
 
         if (totalQuantityRequested > ticketType.getRemainingQuantity()) {
-            log.error("Not enough tickets: Stock={}, Requested={}", 
+            log.error("Not enough tickets: Stock={}, Requested={}",
                     ticketType.getRemainingQuantity(), totalQuantityRequested);
             throw new AppException(ErrorCode.TICKET_NOT_ENOUGH);
         }
 
-        // ins or update
+        // Nếu vé đã tồn tại trong giỏ hàng, tăng số lượng và cập nhật subtotal
         if (existingItem.isPresent()) {
             CartItem item = existingItem.get();
             item.setQuantity(totalQuantityRequested);

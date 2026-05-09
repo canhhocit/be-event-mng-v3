@@ -17,12 +17,14 @@ import java.util.stream.Collectors;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface CartMapper {
 
+    // Chuyển Cart entity sang CartResponse DTO để trả về API.
     @Mapping(target = "totalAmount", expression = "java(calculateTotal(cart.getItems()))")
     @Mapping(target = "items", source = "items", qualifiedByName = "mapCartItems")
     CartResponse toCartResponse(Cart cart);
 
     @Named("mapCartItems")
     default List<CartItemResponse> mapCartItems(List<CartItem> items) {
+        // Chuyển danh sách CartItem sang danh sách CartItemResponse.
         if (items == null) {
             return new ArrayList<>();
         }
@@ -40,6 +42,7 @@ public interface CartMapper {
     CartItemResponse toCartItemResponse(CartItem cartItem);
 
     default BigDecimal calculateTotal(List<CartItem> items) {
+        // Tính tổng tiền của tất cả item trong giỏ hàng.
         if (items == null || items.isEmpty()) {
             return BigDecimal.ZERO;
         }

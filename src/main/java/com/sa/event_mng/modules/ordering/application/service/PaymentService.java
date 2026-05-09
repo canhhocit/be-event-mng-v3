@@ -21,6 +21,9 @@ import org.springframework.web.client.RestTemplate;
 import vn.payos.PayOS;
 import vn.payos.type.Webhook;
 
+/**
+ * Dịch vụ quản lý thanh toán PayOS và webhook nhận từ PayOS.
+ */
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -60,15 +63,15 @@ public class PaymentService {
             description = "TT don hang " + order.getOrderCode();
         }
         
-        // 1. Prepare data for signature
+        // 1. Chuẩn bị data tạo chữ ký theo PayOS yêu cầu
         long amount = order.getTotalAmount().longValue();
         long orderCode = order.getOrderCode();
 
-        // Use backend redirect endpoints which will forward to app deep link (customer://...)
+        // Đường dẫn trả về sau khi thanh toán thành công/hủy
         String returnUrl = backendUrl + "/api/v1/payments/redirect?orderCode=" + orderCode + "&status=success&platform=" + platform;
         String cancelUrl = backendUrl + "/api/v1/payments/redirect?orderCode=" + orderCode + "&status=cancel&platform=" + platform;
         
-        // PayOS requires fields in alphabetical order for signature
+        // PayOS yêu cầu các tham số chữ ký phải theo thứ tự chữ cái
         String signatureData = "amount=" + amount +
                 "&cancelUrl=" + cancelUrl +
                 "&description=" + description +
@@ -77,7 +80,6 @@ public class PaymentService {
 
         String signature = hmacSHA256(signatureData, checksumKey);
 
-        // 2. Create Request Body
         Map<String, Object> body = new HashMap<>();
         body.put("orderCode", orderCode);
         body.put("amount", amount);
@@ -86,7 +88,6 @@ public class PaymentService {
         body.put("returnUrl", returnUrl);
         body.put("signature", signature);
 
-        // 3. Call PayOS API directly using RestTemplate
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.set("x-client-id", clientId);
@@ -102,7 +103,8 @@ public class PaymentService {
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> responseBody = response.getBody();
-                @SuppressWarnings("unchecked")                Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
                 return (String) data.get("checkoutUrl");
             }
         } catch (Exception e) {
@@ -114,17 +116,15 @@ public class PaymentService {
 
     public void handlePayOSWebhook(Webhook webhook) {
         try {
-            // 1. Verify Webhook Signature
+            // Xác thực dữ liệu webhook từ PayOS
             var data = payOS.verifyPaymentWebhookData(webhook);
 
-            // 2. Extract Order Code
             Long orderCode = data.getOrderCode();
 
-            // 3. Find Order and Complete Payment
             Order order = orderRepository.findByOrderCode(orderCode)
                     .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-            // Only complete if not already paid
+            // Hoàn tất thanh toán cho đơn hàng nếu chưa thanh toán
             orderService.completePayment(order.getId());
             
         } catch (Exception e) {

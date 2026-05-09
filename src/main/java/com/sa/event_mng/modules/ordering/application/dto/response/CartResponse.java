@@ -9,7 +9,12 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CartResponse {
+    // Id của giỏ hàng.
     private Long id;
+
+    // Danh sách sản phẩm trong giỏ.
     private List<CartItemResponse> items;
+
+    // Tổng giá trị của giỏ hàng.
     private BigDecimal totalAmount;
 }

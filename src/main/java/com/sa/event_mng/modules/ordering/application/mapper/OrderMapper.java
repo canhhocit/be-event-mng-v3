@@ -7,5 +7,6 @@ import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface OrderMapper {
+    // Chuyển Order entity sang OrderResponse DTO trả về client.
     OrderResponse toOrderResponse(Order order);
 }
