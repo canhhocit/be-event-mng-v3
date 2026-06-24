@@ -1,0 +1,527 @@
+{
+  "info": {
+    "name": "Auth - Đăng nhập (Login API)",
+    "_postman_id": "auth-login-test-collection-v2",
+    "description": "Bộ test case cho API POST /auth/login theo đúng bảng kiểm thử TC01–TC08",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string",
+      "description": "Base URL của server backend"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT token lưu sau khi đăng nhập thành công"
+    }
+  ],
+  "item": [
+    {
+      "name": "TC01 - Đăng nhập thành công với thông tin hợp lệ",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ════════════════════════════════════════════════",
+              "// TC01: Đăng nhập thành công với thông tin hợp lệ",
+              "// Input   : username='admin', password='123456'",
+              "// Expected: 200 OK, có token JWT",
+              "// Loại    : Chức năng",
+              "// ════════════════════════════════════════════════",
+              "",
+              "pm.test('TC01 | Status code là 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('TC01 | Response body là JSON hợp lệ', function () {",
+              "    pm.response.to.be.json;",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test('TC01 | code trả về là 1000 (thành công)', function () {",
+              "    pm.expect(json.code).to.eql(1000);",
+              "});",
+              "",
+              "pm.test('TC01 | result.token tồn tại và không rỗng', function () {",
+              "    pm.expect(json.result).to.be.an('object');",
+              "    pm.expect(json.result.token).to.be.a('string').and.have.length.above(10);",
+              "});",
+              "",
+              "pm.test('TC01 | token có định dạng JWT (3 phần cách nhau bởi dấu chấm)', function () {",
+              "    const parts = json.result.token.split('.');",
+              "    pm.expect(parts).to.have.lengthOf(3);",
+              "});",
+              "",
+              "// Decode JWT payload để kiểm tra claims",
+              "const parts = json.result.token.split('.');",
+              "if (parts.length === 3) {",
+              "    try {",
+              "        const payload = JSON.parse(atob(parts[1]));",
+              "        console.log('JWT Payload:', JSON.stringify(payload, null, 2));",
+              "",
+              "        pm.test('TC01 | JWT payload chứa claim sub (username)', function () {",
+              "            pm.expect(payload).to.have.property('sub');",
+              "            pm.expect(payload.sub).to.eql('organizer');",
+              "        });",
+              "",
+              "        pm.test('TC01 | JWT payload chứa claim exp và chưa hết hạn', function () {",
+              "            pm.expect(payload).to.have.property('exp');",
+              "            pm.expect(payload.exp).to.be.above(Math.floor(Date.now() / 1000));",
+              "        });",
+              "",
+              "        pm.test('TC01 | JWT payload chứa claim scope (roles)', function () {",
+              "            pm.expect(payload).to.have.property('scope');",
+              "        });",
+              "    } catch (e) {",
+              "        console.log('Lỗi decode JWT:', e.message);",
+              "    }",
+              "}",
+              "",
+              "// Lưu token để dùng cho các test case khác",
+              "if (json.result && json.result.token) {",
+              "    pm.collectionVariables.set('accessToken', json.result.token);",
+              "    console.log('Token đã lưu vào collectionVariables.accessToken');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"organizer\",\n    \"password\": \"Admin@123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "TC02 - Đăng nhập với mật khẩu sai",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ════════════════════════════════════════════════",
+              "// TC02: Đăng nhập với mật khẩu sai",
+              "// Input   : username='admin', password='wrongpass'",
+              "// Expected: 401 Unauthorized, ErrorCode 1019 INVALID_CREDENTIALS",
+              "// Loại    : Chức năng",
+              "// ════════════════════════════════════════════════",
+              "",
+              "pm.test('TC02 | Status code là 401 Unauthorized', function () {",
+              "    pm.response.to.have.status(401);",
+              "});",
+              "",
+              "pm.test('TC02 | Response body là JSON hợp lệ', function () {",
+              "    pm.response.to.be.json;",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test('TC02 | code là 1019 (INVALID_CREDENTIALS)', function () {",
+              "    pm.expect(json.code).to.eql(1019);",
+              "});",
+              "",
+              "pm.test('TC02 | message là \"Invalid username or password\"', function () {",
+              "    pm.expect(json.message).to.eql('Invalid username or password');",
+              "});",
+              "",
+              "pm.test('TC02 | result KHÔNG chứa token', function () {",
+              "    pm.expect(json.result).to.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"organizer\",\n    \"password\": \"wrongpass\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "TC03 - Đăng nhập với tài khoản chưa xác thực email",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ════════════════════════════════════════════════",
+              "// TC03: Đăng nhập với tài khoản chưa xác thực email",
+              "// Input   : username='unverified', password='123456'",
+              "// Expected: 403 Forbidden, ErrorCode 1016 USER_DISABLED",
+              "// Ghi chú : Service gọi AppException(USER_DISABLED) khi user.isEnabled()==false",
+              "//           ErrorCode 1022 (ACCOUNT_NOT_VERIFIED) không được dùng ở login flow",
+              "// Loại    : Chức năng",
+              "// ════════════════════════════════════════════════",
+              "",
+              "pm.test('TC03 | Status code là 403 Forbidden', function () {",
+              "    pm.response.to.have.status(403);",
+              "});",
+              "",
+              "pm.test('TC03 | Response body là JSON hợp lệ', function () {",
+              "    pm.response.to.be.json;",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test('TC03 | code là 1016 (USER_DISABLED)', function () {",
+              "    pm.expect(json.code).to.eql(1016);",
+              "});",
+              "",
+              "pm.test('TC03 | message thông báo tài khoản bị vô hiệu hóa', function () {",
+              "    pm.expect(json.message).to.be.a('string').and.not.empty;",
+              "});",
+              "",
+              "pm.test('TC03 | result KHÔNG chứa token', function () {",
+              "    pm.expect(json.result).to.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"unverified\",\n    \"password\": \"123456\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "TC04 - Đăng nhập với tài khoản bị vô hiệu hóa",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ════════════════════════════════════════════════",
+              "// TC04: Đăng nhập với tài khoản bị vô hiệu hóa (admin tắt thủ công)",
+              "// Input   : username='disabled', password='123456'",
+              "// Expected: 403 Forbidden, ErrorCode 1016 USER_DISABLED",
+              "// Loại    : Chức năng",
+              "// ════════════════════════════════════════════════",
+              "",
+              "pm.test('TC04 | Status code là 403 Forbidden', function () {",
+              "    pm.response.to.have.status(403);",
+              "});",
+              "",
+              "pm.test('TC04 | Response body là JSON hợp lệ', function () {",
+              "    pm.response.to.be.json;",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test('TC04 | code là 1016 (USER_DISABLED)', function () {",
+              "    pm.expect(json.code).to.eql(1016);",
+              "});",
+              "",
+              "pm.test('TC04 | message là \"Tài khoản của bạn đã bị vô hiệu hóa.\"', function () {",
+              "    pm.expect(json.message).to.eql('Tài khoản của bạn đã bị vô hiệu hóa.');",
+              "});",
+              "",
+              "pm.test('TC04 | result KHÔNG chứa token', function () {",
+              "    pm.expect(json.result).to.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"disabled\",\n    \"password\": \"123456\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "TC05 - Đăng nhập với username không tồn tại",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ════════════════════════════════════════════════",
+              "// TC05: Đăng nhập với username không tồn tại",
+              "// Input   : username='khongtontai', password='123456'",
+              "// Expected: 401 Unauthorized, ErrorCode 1019 INVALID_CREDENTIALS",
+              "// Loại    : Chức năng",
+              "// ════════════════════════════════════════════════",
+              "",
+              "pm.test('TC05 | Status code là 401 Unauthorized', function () {",
+              "    pm.response.to.have.status(401);",
+              "});",
+              "",
+              "pm.test('TC05 | Response body là JSON hợp lệ', function () {",
+              "    pm.response.to.be.json;",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test('TC05 | code là 1019 (INVALID_CREDENTIALS)', function () {",
+              "    pm.expect(json.code).to.eql(1019);",
+              "});",
+              "",
+              "pm.test('TC05 | message là \"Invalid username or password\"', function () {",
+              "    pm.expect(json.message).to.eql('Invalid username or password');",
+              "});",
+              "",
+              "pm.test('TC05 | result KHÔNG chứa token', function () {",
+              "    pm.expect(json.result).to.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"khongtontai\",\n    \"password\": \"123456\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "TC06 - Thiếu trường dữ liệu (thiếu password)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ════════════════════════════════════════════════",
+              "// TC06: Thiếu trường dữ liệu - thiếu password",
+              "// Input   : body = { \"username\": \"organizer\" }",
+              "// Expected: 400 Bad Request, ErrorCode 1006 hoặc 1007",
+              "// Ghi chú : @NotBlank trên password → MethodArgumentNotValidException",
+              "//           → GlobalExceptionHandler map sang ErrorCode.PASSWORD_REQUIRED (1007)",
+              "// Loại    : Bảo mật",
+              "// ════════════════════════════════════════════════",
+              "",
+              "pm.test('TC06 | Status code là 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('TC06 | Response body là JSON hợp lệ', function () {",
+              "    pm.response.to.be.json;",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test('TC06 | code là 1007 (PASSWORD_REQUIRED) hoặc 1006 (USERNAME_REQUIRED)', function () {",
+              "    pm.expect([1006, 1007]).to.include(json.code);",
+              "});",
+              "",
+              "pm.test('TC06 | message không rỗng', function () {",
+              "    pm.expect(json.message).to.be.a('string').and.not.empty;",
+              "});",
+              "",
+              "pm.test('TC06 | result KHÔNG chứa token', function () {",
+              "    pm.expect(json.result).to.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"organizer\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "TC07 - Thiếu trường dữ liệu (thiếu username)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ════════════════════════════════════════════════",
+              "// TC07: Thiếu trường dữ liệu - thiếu username",
+              "// Input   : body = { \"password\": \"Admin@123\" }",
+              "// Expected: 400 Bad Request, ErrorCode 1006 hoặc 1007",
+              "// Ghi chú : @NotBlank trên username → MethodArgumentNotValidException",
+              "//           → GlobalExceptionHandler map sang ErrorCode.USERNAME_REQUIRED (1006)",
+              "// Loại    : Bảo mật",
+              "// ════════════════════════════════════════════════",
+              "",
+              "pm.test('TC07 | Status code là 400 Bad Request', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('TC07 | Response body là JSON hợp lệ', function () {",
+              "    pm.response.to.be.json;",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test('TC07 | code là 1006 (USERNAME_REQUIRED) hoặc 1007 (PASSWORD_REQUIRED)', function () {",
+              "    pm.expect([1006, 1007]).to.include(json.code);",
+              "});",
+              "",
+              "pm.test('TC07 | message không rỗng', function () {",
+              "    pm.expect(json.message).to.be.a('string').and.not.empty;",
+              "});",
+              "",
+              "pm.test('TC07 | result KHÔNG chứa token', function () {",
+              "    pm.expect(json.result).to.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"password\": \"Admin@123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "TC08 - Kiểm tra SQL Injection cơ bản",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ════════════════════════════════════════════════",
+              "// TC08: Kiểm tra SQL Injection cơ bản",
+              "// Input   : username=\" or 1=1 --\", password='123'",
+              "// Expected: 400 Bad Request, hệ thống không bị crash",
+              "// Ghi chú : Spring Data JPA dùng parameterized query nên an toàn.",
+              "//           Server phải trả về lỗi (không phải 5xx, không có token)",
+              "// Loại    : Bảo mật",
+              "// ════════════════════════════════════════════════",
+              "",
+              "pm.test('TC08 | Hệ thống không bị crash (không phải 5xx)', function () {",
+              "    pm.expect(pm.response.code).to.not.be.within(500, 599);",
+              "});",
+              "",
+              "pm.test('TC08 | Status code là 4xx (từ chối request)', function () {",
+              "    pm.expect(pm.response.code).to.be.within(400, 499);",
+              "});",
+              "",
+              "pm.test('TC08 | Response body là JSON hợp lệ', function () {",
+              "    pm.response.to.be.json;",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test('TC08 | code khác 1000 (không đăng nhập được bằng SQL Injection)', function () {",
+              "    pm.expect(json.code).to.not.eql(1000);",
+              "});",
+              "",
+              "pm.test('TC08 | result KHÔNG chứa token', function () {",
+              "    pm.expect(json.result).to.be.undefined;",
+              "});",
+              "",
+              "pm.test('TC08 | Response không phản chiếu lại payload độc hại (no SQL echo)', function () {",
+              "    const body = pm.response.text().toLowerCase();",
+              "    pm.expect(body).to.not.include('syntax error');",
+              "    pm.expect(body).to.not.include('sql');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"' or 1=1 --\",\n    \"password\": \"123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    }
+  ]
+}

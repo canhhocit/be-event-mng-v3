@@ -39,7 +39,9 @@ public enum ErrorCode {
     USER_DISABLED(1016, "Tài khoản của bạn đã bị vô hiệu hóa.", HttpStatus.FORBIDDEN),
     USER_UNAUTHORIZED(1017, "Unauthorized access", HttpStatus.UNAUTHORIZED),
 
-    PASSWORD_NOT_MATCH(1018, "Password does not match", HttpStatus.BAD_REQUEST),
+    PASSWORD_NOT_MATCH(1018, "Password does not match", HttpStatus.UNAUTHORIZED),
+
+    INVALID_CREDENTIALS(1019, "Invalid username or password", HttpStatus.UNAUTHORIZED),
 
     // Authentication & Authorization (4006-4007)
     UNAUTHENTICATED(4006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
