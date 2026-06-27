@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout
@@ -25,21 +25,16 @@ jobs:
       - name: Push image
         run: docker push canhhocit/event-mng:latest
 
-      - name: Deploy Ubuntu
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            docker pull canhhocit/event-mng:latest
+      - name: Deploy
+        run: |
+          docker pull canhhocit/event-mng:latest
 
-            docker stop event-mng || true
-            docker rm event-mng || true
+          docker stop event-mng || true
+          docker rm event-mng || true
 
-            docker run -d \
-              --name event-mng \
-              -p 8080:8080 \
-              --add-host=host.docker.internal:host-gateway \
-              --env-file ~/be-event-mng-v3/.env \
-              canhhocit/event-mng:latest
+          docker run -d \
+            --name event-mng \
+            -p 8080:8080 \
+            --add-host=host.docker.internal:host-gateway \
+            --env-file /home/canhhocit/be-event-mng-v3/.env \
+            canhhocit/event-mng:latest
