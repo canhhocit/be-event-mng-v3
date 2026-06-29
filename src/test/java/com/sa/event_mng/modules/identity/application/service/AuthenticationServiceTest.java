@@ -47,7 +47,7 @@ class AuthenticationServiceTest {
 
     @BeforeEach
     void setUp() {
-        authenticationService.SIGNER_KEY = "test-secret-key-for-jwt-generation-123";
+        authenticationService.SIGNER_KEY = "test-secret-key-for-jwt-hs512-generation-minimum-64-bytes-required!!";
         authenticationService.VALID_DURATION = 3600L;
         authenticationService.REFRESHABLE_DURATION = 86400L;
     }
@@ -89,7 +89,7 @@ class AuthenticationServiceTest {
 
         AppException exception = assertThrows(AppException.class, () -> authenticationService.authenticate(request));
 
-        assertEquals(ErrorCode.USER_NOT_EXISTED, exception.getErrorCode());
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, exception.getErrorCode());
         verify(passwordEncoder, never()).matches(any(), any());
     }
 
@@ -111,7 +111,7 @@ class AuthenticationServiceTest {
 
         AppException exception = assertThrows(AppException.class, () -> authenticationService.authenticate(request));
 
-        assertEquals(ErrorCode.PASSWORD_NOT_MATCH, exception.getErrorCode());
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, exception.getErrorCode());
     }
 
     @Test
