@@ -25,9 +25,6 @@ jobs:
           chmod +x mvnw
           ./mvnw test
 
-      - name: Run tests with Maven
-        run: ./mvnw test
-
       - name: Build with Maven
         run: ./mvnw package -DskipTests
 
