@@ -43,4 +43,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: phananh0906/testcicd:${{ github.sha }}
+          tags: ${{ secrets.D_USERNAME }}/testcicd:${{ github.sha }}
