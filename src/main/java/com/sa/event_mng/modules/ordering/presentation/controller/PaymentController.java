@@ -88,7 +88,7 @@ public class PaymentController {
                     }
                 });
             }
-
+            
             String finalUrl;
             if ("web".equalsIgnoreCase(platform)) {
                 // Redirect back to Web Frontend
