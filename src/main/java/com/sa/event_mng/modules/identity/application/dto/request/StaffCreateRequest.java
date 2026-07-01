@@ -10,7 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class StaffCreateRequest {
-    @Size(min = 3, message = "USERNAME_INVALID")
+    @Size(min = 3, max = 50, message = "USERNAME_INVALID")
     @NotBlank(message = "USERNAME_REQUIRED")
     private String username;
 
@@ -18,7 +18,7 @@ public class StaffCreateRequest {
     @NotBlank(message = "EMAIL_REQUIRED")
     private String email;
 
-    @Size(min = 6, message = "PASSWORD_INVALID")
+    @Size(min = 6, max = 50, message = "PASSWORD_INVALID")
     @NotBlank(message = "PASSWORD_REQUIRED")
     private String password;
 
