@@ -12,7 +12,7 @@ public enum ErrorCode {
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorize exception", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // User errors (1002-1099)
-    USER_EXISTED(1002, "User existed", HttpStatus.BAD_REQUEST),
+    USER_EXISTED(1002, "nguoi dung da ton tai", HttpStatus.BAD_REQUEST),
     USER_NOT_EXISTED(1003, "User not existed", HttpStatus.NOT_FOUND),
 
     USERNAME_INVALID(1004, "Username must be between 3 and 50 characters in length", HttpStatus.BAD_REQUEST),
