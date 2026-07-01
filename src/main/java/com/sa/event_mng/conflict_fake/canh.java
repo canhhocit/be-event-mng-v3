@@ -20,4 +20,5 @@ public class canh {
     LocalDateTime publishedAt;
     LocalDateTime createdAt;
     Set<BlogTagResponse> tags;
+    local gay
 }
