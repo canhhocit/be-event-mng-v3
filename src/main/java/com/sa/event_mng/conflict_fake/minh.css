@@ -1,0 +1,13 @@
+.phan {
+    color: red;
+    font-weight: bold;
+}
+.box{
+    height: 100px;
+    width: 100px;
+    background-color: blue;
+    padding: 10px;
+}
+body {
+    background-color: #f0f0f0;
+}
