@@ -1,0 +1,37 @@
+name: Deploy Real Backend to Ubuntu
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted 
+
+    steps:
+      - name: Bước 1 - Kéo source code mới nhất về
+        uses: actions/checkout@v4
+
+      - name: Bước 2 - Tạo file môi trường (.env) tự động
+        run: |
+          # Ghi thông tin cấu hình đè vào file .env mới tinh
+          echo "MYSQL_URL=jdbc:mysql://host.docker.internal:3306/event_mng?serverTimezone=Asia/Ho_Chi_Minh&createDatabaseIfNotExist=true" > .env
+          echo "MYSQLUSER=event_mng" >> .env
+          echo "MYSQLPASS=123456" >> .env
+
+      - name: Bước 3 - Build và Run Docker
+        run: |
+          # 1. Dọn dẹp container cũ
+          docker rm -f event-mng || true
+          
+          # 2. Build image mới từ Dockerfile có sẵn của project
+          docker build -t event-mng .
+          
+          # 3. Chạy hệ thống
+          docker run -d \
+            --name event-mng \
+            --env-file .env \
+            --add-host=host.docker.internal:host-gateway \
+            -p 8080:8080 \
+            event-mng
