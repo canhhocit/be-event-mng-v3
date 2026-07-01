@@ -19,7 +19,7 @@ public class UserCreateRequest {
     private String username;
 
     @NotBlank(message = "PASSWORD_REQUIRED")
-    @Size(min = 6, max = 100, message = "PASSWORD_INVALID")
+    @Size(min = 6, max = 50, message = "PASSWORD_INVALID")
     private String password;
 
     @NotBlank(message = "EMAIL_REQUIRED")
@@ -27,7 +27,7 @@ public class UserCreateRequest {
     private String email;
 
     @NotBlank(message = "FULLNAME_REQUIRED")
-    @Size(max = 100, message = "FULLNAME_TOO_LONG")
+    @Size(max = 50, message = "FULLNAME_TOO_LONG")
     private String fullName;
 
     @Pattern(regexp = "^$|[0-9]{10,11}$", message = "PHONE_INVALID")

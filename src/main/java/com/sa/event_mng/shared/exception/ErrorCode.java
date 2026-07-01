@@ -12,11 +12,11 @@ public enum ErrorCode {
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorize exception", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // User errors (1002-1099)
-    USER_EXISTED(1002, "User existed", HttpStatus.BAD_REQUEST),
-    USER_NOT_EXISTED(1003, "User not existed", HttpStatus.NOT_FOUND),
+    USER_EXISTED(1002, "nguoi dung da ton tai", HttpStatus.BAD_REQUEST),
+    USER_NOT_EXISTED(1003, "nguoi dung khong ton tai", HttpStatus.NOT_FOUND),
 
-    USERNAME_INVALID(1004, "Username must be at least 3 characters", HttpStatus.BAD_REQUEST),
-    PASSWORD_INVALID(1005, "Password must be at least 6 characters", HttpStatus.BAD_REQUEST),
+    USERNAME_INVALID(1004, "Username must be between 3 and 50 characters in length", HttpStatus.BAD_REQUEST),
+    PASSWORD_INVALID(1005, "Password must be between 6 and 50 characters in length", HttpStatus.BAD_REQUEST),
 
     USERNAME_REQUIRED(1006, "Username is required", HttpStatus.BAD_REQUEST),
     USERNAME_EXISTED(1021, "Username already existed", HttpStatus.BAD_REQUEST),
@@ -39,7 +39,9 @@ public enum ErrorCode {
     USER_DISABLED(1016, "Tài khoản của bạn đã bị vô hiệu hóa.", HttpStatus.FORBIDDEN),
     USER_UNAUTHORIZED(1017, "Unauthorized access", HttpStatus.UNAUTHORIZED),
 
-    PASSWORD_NOT_MATCH(1018, "Password does not match", HttpStatus.BAD_REQUEST),
+    PASSWORD_NOT_MATCH(1018, "Password does not match", HttpStatus.UNAUTHORIZED),
+
+    INVALID_CREDENTIALS(1019, "Invalid username or password", HttpStatus.UNAUTHORIZED),
 
     // Authentication & Authorization (4006-4007)
     UNAUTHENTICATED(4006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
@@ -57,6 +59,7 @@ public enum ErrorCode {
     EVENT_SALE_PERIOD_INVALID(3002, "Thời gian kết thúc bán vé phải sau thời gian bắt đầu ít nhất 12 tiếng", HttpStatus.BAD_REQUEST),
     EVENT_START_TIME_INVALID(3003, "Thời gian diễn ra sự kiện phải sau khi kết thúc bán vé ít nhất 1 ngày", HttpStatus.BAD_REQUEST),
     EVENT_DURATION_INVALID(3004, "Thời gian kết thúc sự kiện phải diễn ra ít nhất 2 tiếng sau khi bắt đầu", HttpStatus.BAD_REQUEST),
+    EVENT_ID_REQUIRED(3005, "Event ID is required", HttpStatus.BAD_REQUEST),
 
     // FILE
     FILE_INPUT_ERR(4001, "Cannot store file", HttpStatus.BAD_REQUEST),

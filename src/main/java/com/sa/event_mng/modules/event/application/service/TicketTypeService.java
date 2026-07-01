@@ -30,7 +30,7 @@ public class TicketTypeService {
         @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
         public TicketTypeResponse create(TicketTypeRequest request) {
                 Event event = eventRepository.findById(request.getEventId())
-                                .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION));
+                                .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
 
                 // Security check
                 String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();

@@ -1,13 +1,13 @@
-// package com.sa.event_mng.faker;
-
-// import org.springframework.boot.CommandLineRunner;
-// import org.springframework.context.annotation.Bean;
-// import org.springframework.context.annotation.Configuration;
-// import org.springframework.core.annotation.Order;
-
-// @Configuration
-// public class DataFaker {
-
+//package com.sa.event_mng.faker;
+//
+//import org.springframework.boot.CommandLineRunner;
+//import org.springframework.context.annotation.Bean;
+//import org.springframework.context.annotation.Configuration;
+//import org.springframework.core.annotation.Order;
+//
+//@Configuration
+//public class DataFaker {
+//
 //    @Bean
 //    @Order(2)
 //    CommandLineRunner seedDatabase(
@@ -21,11 +21,12 @@
 //            OrderItemSeeder orderItemSeeder,
 //            TicketSeeder ticketSeeder,
 //            BlogTagSeeder blogTagSeeder,
-//            BlogPostSeeder blogPostSeeder
+//            BlogPostSeeder blogPostSeeder,
+//            VoucherSeeder voucherSeeder
 //    ) {
 //        return args -> {
 //            System.out.println("=== START SEED DATABASE ===");
-
+//
 //            seedAndLog("CategorySeeder", categorySeeder::seed);
 //            seedAndLog("UserSeeder", userSeeder::seed);
 //            seedAndLog("EventSeeder", eventSeeder::seed);
@@ -37,13 +38,14 @@
 //            seedAndLog("TicketSeeder", ticketSeeder::seed);
 //            seedAndLog("BlogTagSeeder", blogTagSeeder::seed);
 //            seedAndLog("BlogPostSeeder", blogPostSeeder::seed);
-
+//            seedAndLog("VoucherSeeder", voucherSeeder::seed);
+//
 //            System.out.println("=== END SEED DATABASE ===");
 //        };
 //    }
-
+//
 //    private void seedAndLog(String seedName, Runnable seedAction) {
 //        seedAction.run();
 //        System.out.println("=== " + seedName + " SEED SUCCESS ===");
 //    }
-// }
+//}

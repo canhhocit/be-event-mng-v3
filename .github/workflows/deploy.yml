@@ -1,0 +1,40 @@
+name: CI-CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login DockerHub
+        run: |
+          echo "${{ secrets.DOCKER_TOKEN }}" | docker login \
+            -u "${{ secrets.DOCKER_USERNAME }}" \
+            --password-stdin
+
+      - name: Build image
+        run: docker build -t canhhocit/event-mng:latest .
+
+      - name: Push image
+        run: docker push canhhocit/event-mng:latest
+
+      - name: Deploy
+        run: |
+          docker pull canhhocit/event-mng:latest
+
+          docker stop event-mng || true
+          docker rm event-mng || true
+
+          docker run -d \
+            --name event-mng \
+            -p 8080:8080 \
+            --add-host=host.docker.internal:host-gateway \
+            --env-file /home/canhhocit/be-event-mng-v3/.env \
+            canhhocit/event-mng:latest
