@@ -12,4 +12,4 @@ COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 
 # Command to run the application using sh to expand environment variables
-ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]
+ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]tao bug by diep
