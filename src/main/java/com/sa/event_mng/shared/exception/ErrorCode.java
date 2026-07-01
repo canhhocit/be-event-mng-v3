@@ -13,7 +13,7 @@ public enum ErrorCode {
 
     // User errors (1002-1099)
     USER_EXISTED(1002, "nguoi dung da ton tai", HttpStatus.BAD_REQUEST),
-    USER_NOT_EXISTED(1003, "User not existed", HttpStatus.NOT_FOUND),
+    USER_NOT_EXISTED(1003, "nguoi dung khong ton tai", HttpStatus.NOT_FOUND),
 
     USERNAME_INVALID(1004, "Username must be at least 3 characters", HttpStatus.BAD_REQUEST),
     PASSWORD_INVALID(1005, "Password must be at least 6 characters", HttpStatus.BAD_REQUEST),
