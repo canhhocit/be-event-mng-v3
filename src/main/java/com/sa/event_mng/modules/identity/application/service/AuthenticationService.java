@@ -76,7 +76,7 @@ public class AuthenticationService {
         }
 
         var token = generateToken(user);
-
+        log.info("[Auth] : Đăng nhập thành công");
         return AuthenticationResponse.builder()
                 .token(token)
                 .build();
