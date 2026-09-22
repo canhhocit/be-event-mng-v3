@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ApplicationInitConfig {
 
-  PasswordEncoder passwordEncoder;
+  private final PasswordEncoder passwordEncoder;
 
   @Bean
   @Order(1)
