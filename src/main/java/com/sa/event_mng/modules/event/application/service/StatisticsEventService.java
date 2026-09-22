@@ -7,6 +7,7 @@ import com.sa.event_mng.modules.event.domain.repository.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +45,7 @@ public class StatisticsEventService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @Cacheable(value = "event_status_stats", key = "#quarter + '-' + #year")
     public EventStatusStatsResponse getEventStatusStats(Long quarter, Long year) {
         List<EventStatusStatsProjection> eventStatusStatsProjections = statisticsEventRepository.findEventStatusStats(quarter, year);
         long total = eventStatusStatsProjections.stream()
@@ -78,6 +80,7 @@ public class StatisticsEventService {
     );
 
     @PreAuthorize("hasRole('ADMIN')")
+    @Cacheable(value = "event_temporal_stats", key = "#dayOfWeek")
     public EventTemporalStatsResponse getEventTemporalStats(int dayOfWeek) {
         List<EventTemporalStatsProjection> eventTemporalStatsProjection = statisticsEventRepository.findEventTemporalStats(dayOfWeek);
 
@@ -101,6 +104,7 @@ public class StatisticsEventService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @Cacheable(value = "top_events")
     public TopEventQuarterResponse getTop5EventsByQuarter() {
         LocalDate now = LocalDate.now();
         int quarter = (now.getMonthValue() - 1) / 3 + 1;
