@@ -1,15 +1,29 @@
-# Stage 1: build
-FROM maven:3.9.12-eclipse-temurin-17 AS build
+# Stage 1: Build JAR with Maven dependency caching
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn package -DskipTests
 
-# Stage 2: create image
-FROM eclipse-temurin:17-jre
+# Cache dependencies
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# Copy source code and build production package
+COPY src ./src
+RUN mvn package -DskipTests -B
+
+# Stage 2: Optimized Lightweight Runtime Environment
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+
+# Non-root user for security best practices
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+# Copy JAR from builder stage
+COPY --from=builder /app/target/*.jar app.jar
+
+# Expose HTTP Port
 EXPOSE 8080
 
-# Command to run the application using sh to expand environment variables
-ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]tao bug by diep
+# Production JVM Flags for Cloud Containers (Render Free Tier 512MB RAM optimization)
+# -XX:MaxRAMPercentage=75.0 ensures JVM stays within container limit (avoiding OOM killer)
+ENTRYPOINT ["sh", "-c", "java -XX:+UseG1GC -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=40.0 -XX:+ExitOnOutOfMemoryError -jar app.jar --server.port=${PORT:-8080}"]

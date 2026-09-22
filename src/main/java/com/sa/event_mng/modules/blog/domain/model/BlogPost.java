@@ -30,7 +30,7 @@ public class BlogPost extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String summary;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     private String thumbnail;

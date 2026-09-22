@@ -46,16 +46,26 @@ public class SecurityConfig {
       "/swagger-ui/**",
       "/swagger-ui.html",
       "/vouchers/**",
-      "/error"
+      "/error",
+      "/ping",
+      "/api/v1/ping",
+      "/actuator/**"
   };
 
   @Value("${application.security.jwt.secret-key}")
   private String signerKey;
 
+  @Value("${app.cors.allowed-origins:https://event-mng-v2.vercel.app,http://localhost:5173}")
+  private String allowedOrigins;
+
   @Bean
   CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
-    config.addAllowedOrigin("https://event-mng-v2.vercel.app");
+    if (allowedOrigins != null && !allowedOrigins.isBlank()) {
+        for (String origin : allowedOrigins.split(",")) {
+            config.addAllowedOrigin(origin.trim());
+        }
+    }
     config.addAllowedOriginPattern("*");
     config.addAllowedMethod("*");
     config.addAllowedHeader("*");
