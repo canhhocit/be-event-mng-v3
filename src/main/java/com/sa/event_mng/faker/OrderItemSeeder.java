@@ -26,6 +26,10 @@ public class OrderItemSeeder {
     private final Random random = new Random();
 
     public void seed() {
+        // Khong co guard nay thi moi lan khoi dong lai se them item vao TAT CA
+        // don hang cu va tru tiep ton kho ve.
+        if (orderItemRepository.count() > 0) return;
+
         List<Order> orders = orderRepository.findAll();
         List<com.sa.event_mng.modules.event.domain.model.Event> events = eventRepository.findAll();
         if (orders.isEmpty() || events.isEmpty()) return;

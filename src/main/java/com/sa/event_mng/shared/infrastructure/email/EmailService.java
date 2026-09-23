@@ -22,7 +22,7 @@ public class EmailService {
     private final org.thymeleaf.TemplateEngine templateEngine;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${spring.mail.password}")
+    @Value("${app.mail.api-key}")
     private String apiKey;
 
     @Value("${app.mail.from}")

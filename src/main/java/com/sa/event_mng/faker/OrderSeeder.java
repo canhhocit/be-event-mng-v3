@@ -27,6 +27,10 @@ public class OrderSeeder {
     private final Random random = new Random();
 
     public void seed() {
+        // Khong co guard nay thi moi lan khoi dong lai se sinh them 1-3 don hang
+        // cho tung khach hang.
+        if (orderRepository.count() > 0) return;
+
         List<User> customers = userRepository.findByRoles_Name("CUSTOMER");
         List<com.sa.event_mng.modules.event.domain.model.Event> events = eventRepository.findAll();
         if (customers.isEmpty() || events.isEmpty()) return;

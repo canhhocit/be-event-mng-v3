@@ -24,6 +24,10 @@ public class CartItemSeeder {
     private final Random random = new Random();
 
     public void seed() {
+        // Khong co guard nay thi moi lan khoi dong lai se them mot lot cart item
+        // moi va tru tiep ton kho ve.
+        if (cartItemRepository.count() > 0) return;
+
         List<Cart> carts = cartRepository.findAll();
         List<TicketType> ticketTypes = ticketTypeRepository.findAll();
 
