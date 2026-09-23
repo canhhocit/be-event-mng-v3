@@ -317,14 +317,16 @@ public class OrderService {
             // Đảm bảo nạp Tickets (do đang trong Transaction nên có thể gọi trực tiếp)
             if (fullOrder.getTickets() != null) fullOrder.getTickets().size(); 
             
-            if (fullOrder.getCustomer().getEmail() != null) {
-                try {
-                    byte[] pdfBytes = pdfService.generateOrderInvoice(fullOrder);
-                    emailService.sendOrderConfirmationWithInvoice(fullOrder.getCustomer().getEmail(), fullOrder, pdfBytes);
-                } catch (Exception e) {
-                    log.error("Lỗi khi tạo PDF hoặc gửi mail: {}", e.getMessage());
-                    e.printStackTrace();
-                }
+            if (fullOrder.getCustomer() != null && fullOrder.getCustomer().getEmail() != null) {
+                final String customerEmail = fullOrder.getCustomer().getEmail();
+                java.util.concurrent.CompletableFuture.runAsync(() -> {
+                    try {
+                        byte[] pdfBytes = pdfService.generateOrderInvoice(fullOrder);
+                        emailService.sendOrderConfirmationWithInvoice(customerEmail, fullOrder, pdfBytes);
+                    } catch (Exception e) {
+                        log.error("Lỗi khi tạo PDF hoặc gửi mail bất đồng bộ: {}", e.getMessage());
+                    }
+                });
             }
         } catch (AppException ae) {
             throw ae;
@@ -348,18 +350,7 @@ public class OrderService {
     public Page<OrderResponse> getMyOrders(PageRequest pageRequest) {
         User user = getCurrentUser();
         Page<Order> orderPage = orderRepository.findByCustomerId(user.getId(), pageRequest);
-        return orderPage.map(order -> {
-            OrderResponse response = orderMapper.toOrderResponse(order);
-            // Nếu là PENDING và dùng PAYOS, ta tạo link mới để khách có thể tiếp tục thanh toán
-            if (order.getPaymentStatus() == PaymentStatus.PENDING && order.getPaymentMethod() == PaymentMethod.PAYOS) {
-                try {
-                    response.setPaymentUrl(paymentService.createPayOSPaymentLink(order, "web"));
-                } catch (Exception e) {
-                    log.error("Không thể tạo lại link thanh toán cho đơn hàng {}: {}", order.getOrderCode(), e.getMessage());
-                }
-            }
-            return response;
-        });
+        return orderPage.map(orderMapper::toOrderResponse);
     }
 
     @Transactional
