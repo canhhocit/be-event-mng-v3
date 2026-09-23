@@ -8,6 +8,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import com.sa.event_mng.shared.dto.ApiResponse;
 
@@ -16,6 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    // Client da dong ket noi (timeout, chuyen trang...) -> khong the ghi response nua, chi log ngan gon
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    void handlingClientAbort(AsyncRequestNotUsableException ex) {
+        log.warn("Client disconnected before response was written: {}", ex.getMessage());
+    }
 
     @ExceptionHandler(value = Exception.class)
     ResponseEntity<ApiResponse<Object>> handlingException(Exception ex) {
