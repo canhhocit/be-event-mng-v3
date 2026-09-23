@@ -22,7 +22,9 @@ public class EmailService {
     private final org.thymeleaf.TemplateEngine templateEngine;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${app.mail.api-key}")
+
+    @Value("${brevo.api.key}")
+
     private String apiKey;
 
     @Value("${app.mail.from}")
@@ -106,6 +108,13 @@ public class EmailService {
             }
         } catch (HttpClientErrorException e) {
             log.error("Lỗi HTTP từ Brevo API: {}. Nội dung: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                if (apiKey != null && apiKey.startsWith("xsmtpsib-")) {
+                    log.error("👉 NGUYÊN NHÂN: Bạn đang truyền SMTP Password (bắt đầu bằng 'xsmtpsib-...'). Brevo REST API bắt buộc dùng Brevo API Key (bắt đầu bằng 'xkeysib-...'). Vui lòng vào Brevo Dashboard -> SMTP & API -> API Keys để tạo v3 API Key và đặt biến BREVO_API_KEY!");
+                } else {
+                    log.error("👉 NGUYÊN NHÂN: Brevo API Key không hợp lệ hoặc đã bị revoke. Vui lòng kiểm tra lại biến BREVO_API_KEY!");
+                }
+            }
         } catch (Exception e) {
             log.error("KHÔNG THỂ GỬI EMAIL QUA API! Lỗi: {}", e.getMessage());
             e.printStackTrace();

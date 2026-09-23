@@ -13,25 +13,26 @@ import java.util.List;
 
 public interface StatisticsEventRepository extends JpaRepository<Event, Long> {
 
-    @Query(value = "SELECT status AS status, COUNT(*) AS count " +
-            "FROM events " +
-            "WHERE YEAR(start_time) = :year " +
-            "AND QUARTER(start_time) = :quarter " +
-            "GROUP BY status",
-            nativeQuery = true)
+    @Query(value = """
+            SELECT status AS status, COUNT(*) AS count
+            FROM events
+            WHERE EXTRACT(YEAR FROM start_time) = :year
+            AND EXTRACT(QUARTER FROM start_time) = :quarter
+            GROUP BY status
+            """, nativeQuery = true)
     List<EventStatusStatsProjection> findEventStatusStats(@Param("quarter") Long quarter, @Param("year") Long year);
 
     @Query(value = """
-    SELECT HOUR(e.start_time) AS hourOfDay,
+    SELECT EXTRACT(HOUR FROM e.start_time) AS hourOfDay,
         CASE
             WHEN SUM(t.total_quantity) = 0 THEN 0
             ELSE SUM(t.total_quantity - t.remaining_quantity) * 100.0 / SUM(t.total_quantity)
         END AS percentageOfTicketsSold
     FROM events e
     JOIN ticket_types t ON e.id = t.event_id
-    WHERE DAYOFWEEK(e.start_time) = :dayOfWeek
-    GROUP BY HOUR(e.start_time)
-    ORDER BY HOUR(e.start_time)
+    WHERE EXTRACT(ISODOW FROM e.start_time) = :dayOfWeek
+    GROUP BY EXTRACT(HOUR FROM e.start_time)
+    ORDER BY hourOfDay
     """, nativeQuery = true)
     List<EventTemporalStatsProjection> findEventTemporalStats(@Param("dayOfWeek") Integer dayOfWeek);
 
@@ -48,7 +49,7 @@ public interface StatisticsEventRepository extends JpaRepository<Event, Long> {
     JOIN ticket_types tt ON e.id = tt.event_id
     LEFT JOIN order_items oi ON oi.ticket_type_id = tt.id
     LEFT JOIN orders o ON o.id = oi.order_id
-    WHERE QUARTER(e.start_time) = :quarter AND YEAR(e.start_time) = :year
+    WHERE EXTRACT(QUARTER FROM e.start_time) = :quarter AND EXTRACT(YEAR FROM e.start_time) = :year
     AND o.payment_status = 'PAID'
     GROUP BY e.id, e.name, e.status
     ORDER BY totalRevenue DESC, ticketsSold DESC, occupancyRate DESC
@@ -68,7 +69,7 @@ public interface StatisticsEventRepository extends JpaRepository<Event, Long> {
     LEFT JOIN order_items oi ON oi.ticket_type_id = tt.id
     LEFT JOIN orders o ON o.id = oi.order_id AND o.payment_status = 'PAID'
     WHERE e.organizer_id = :organizerId
-    AND YEAR(e.start_time) = :year
+    AND EXTRACT(YEAR FROM e.start_time) = :year
     GROUP BY e.id, e.name, e.status
     ORDER BY e.start_time ASC
     """, nativeQuery = true)

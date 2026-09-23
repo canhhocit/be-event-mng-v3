@@ -36,29 +36,29 @@ public interface StatisticsOrderRepository extends JpaRepository<Order, String> 
     SELECT SUM(service_fee) as totalRevenue
     FROM orders
     WHERE payment_status = 'PAID'
-        AND YEAR(paid_at) = :year
+        AND EXTRACT(YEAR FROM paid_at) = :year
     """, nativeQuery = true)
     EventRevenueStatsAdminProjection findEventRevenueAdminStats(@Param("year") int year);
 
     @Query(value = """
-    SELECT YEAR(paid_at) as year, MONTH(paid_at) as month, SUM(service_fee) as revenue
+    SELECT EXTRACT(YEAR FROM paid_at) as year, EXTRACT(MONTH FROM paid_at) as month, SUM(service_fee) as revenue
     FROM orders
-    WHERE payment_status = 'PAID' AND YEAR(paid_at) = :year
-    GROUP BY YEAR(paid_at), MONTH(paid_at)
+    WHERE payment_status = 'PAID' AND EXTRACT(YEAR FROM paid_at) = :year
+    GROUP BY EXTRACT(YEAR FROM paid_at), EXTRACT(MONTH FROM paid_at)
     ORDER BY month ASC
     """, nativeQuery = true)
     List<MonthlyRevenueProjection> findMonthlyRevenueAdmin(@Param("year") int year);
 
     @Query(value = """
-    SELECT YEAR(o.paid_at) as year, MONTH(o.paid_at) as month, SUM(o.organizer_amount) as revenue
+    SELECT EXTRACT(YEAR FROM o.paid_at) as year, EXTRACT(MONTH FROM o.paid_at) as month, SUM(o.organizer_amount) as revenue
     FROM orders o
     JOIN order_items oi ON o.id = oi.order_id
     JOIN ticket_types tt ON oi.ticket_type_id = tt.id
     JOIN events e ON e.id = tt.event_id
     WHERE o.payment_status = 'PAID'
     AND e.organizer_id = :organizerId
-    AND YEAR(o.paid_at) = :year
-    GROUP BY YEAR(o.paid_at), MONTH(o.paid_at)
+    AND EXTRACT(YEAR FROM o.paid_at) = :year
+    GROUP BY EXTRACT(YEAR FROM o.paid_at), EXTRACT(MONTH FROM o.paid_at)
     ORDER BY month ASC
     """, nativeQuery = true)
     List<MonthlyRevenueOrganizerProjection> findMonthlyRevenueOrganizer(@Param("organizerId") Long organizerId, @Param("year") int year);

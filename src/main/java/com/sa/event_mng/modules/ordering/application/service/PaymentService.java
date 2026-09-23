@@ -102,8 +102,17 @@ public class PaymentService {
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> responseBody = response.getBody();
-                @SuppressWarnings("unchecked")                Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
-                return (String) data.get("checkoutUrl");
+                String code = String.valueOf(responseBody.get("code"));
+                String desc = String.valueOf(responseBody.get("desc"));
+                
+                @SuppressWarnings("unchecked")
+                Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
+                if (data != null && data.get("checkoutUrl") != null) {
+                    return (String) data.get("checkoutUrl");
+                } else {
+                    System.err.println("PayOS API Response Error: code=" + code + ", desc=" + desc + ", fullBody=" + responseBody);
+                    throw new Exception("PayOS API Error [" + code + "]: " + desc);
+                }
             }
         } catch (Exception e) {
             System.err.println("PayOS API Error: " + e.getMessage());
