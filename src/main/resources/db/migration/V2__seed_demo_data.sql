@@ -17,22 +17,22 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Tài khoản Admin
 INSERT INTO users (id, username, password, full_name, email, phone, address, enabled, created_at, updated_at) VALUES
-(1, 'admin', '$2a$10$e8wFAfN204GfE1v57/0d/OQpEaM8FzZkU0Q.0G6h2F.v0Zz5sX0sW', 'Quản Trị Viên Hệ Thống', 'admin@eventmng.com', '0901234567', 'Tòa nhà Bitexco, Q.1, TP. Hồ Chí Minh', true, NOW(), NOW())
-ON CONFLICT (username) DO NOTHING;
+(1, 'admin', '$2a$10$Yh/F0RRuLqSg6HnsmSAPB.OI/Y5fHzpiQt1nCEpjQqCkBQr3TuhIu', 'Quản Trị Viên Hệ Thống', 'admin@eventmng.com', '0901234567', 'Tòa nhà Bitexco, Q.1, TP. Hồ Chí Minh', true, NOW(), NOW())
+ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, enabled = true;
 
 -- Ban Tổ Chức (Organizers)
 INSERT INTO users (id, username, password, full_name, email, phone, address, enabled, created_at, updated_at) VALUES
-(2, 'saigon_concerts', '$2a$10$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW', 'Công ty Giải trí Saigon Concerts', 'contact@saigonconcerts.vn', '0988776655', '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh', true, NOW(), NOW()),
-(3, 'techfest_vn', '$2a$10$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW', 'Hiệp hội Công nghệ Vietnam Tech Community', 'events@techfest.vn', '0912345678', 'Tầng 5, Keangnam Landmark 72, Nam Từ Liêm, Hà Nội', true, NOW(), NOW()),
-(4, 'vn_marathon', '$2a$10$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW', 'Ban Tổ Chức Giải Chạy Việt Nam', 'info@vnmarathon.org', '0933445566', '45 Lê Duẩn, Quận 1, TP. Hồ Chí Minh', true, NOW(), NOW())
-ON CONFLICT (username) DO NOTHING;
+(2, 'saigon_concerts', '$2a$10$Yh/F0RRuLqSg6HnsmSAPB.OI/Y5fHzpiQt1nCEpjQqCkBQr3TuhIu', 'Công ty Giải trí Saigon Concerts', 'contact@saigonconcerts.vn', '0988776655', '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh', true, NOW(), NOW()),
+(3, 'techfest_vn', '$2a$10$Yh/F0RRuLqSg6HnsmSAPB.OI/Y5fHzpiQt1nCEpjQqCkBQr3TuhIu', 'Hiệp hội Công nghệ Vietnam Tech Community', 'events@techfest.vn', '0912345678', 'Tầng 5, Keangnam Landmark 72, Nam Từ Liêm, Hà Nội', true, NOW(), NOW()),
+(4, 'vn_marathon', '$2a$10$Yh/F0RRuLqSg6HnsmSAPB.OI/Y5fHzpiQt1nCEpjQqCkBQr3TuhIu', 'Ban Tổ Chức Giải Chạy Việt Nam', 'info@vnmarathon.org', '0933445566', '45 Lê Duẩn, Quận 1, TP. Hồ Chí Minh', true, NOW(), NOW())
+ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, enabled = true;
 
 -- Khách hàng (Customers)
 INSERT INTO users (id, username, password, full_name, email, phone, address, enabled, created_at, updated_at) VALUES
-(5, 'hoanganh', '$2a$10$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW', 'Nguyễn Hoàng Anh', 'hoanganh@gmail.com', '0971112233', '15 Lê Văn Sỹ, Quận 3, TP. Hồ Chí Minh', true, NOW(), NOW()),
-(6, 'thuylinh', '$2a$10$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW', 'Phạm Thùy Linh', 'thuylinh.pham@gmail.com', '0962223344', '88 Cầu Giấy, Hà Nội', true, NOW(), NOW()),
-(7, 'quangminh', '$2a$10$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW', 'Đặng Quang Minh', 'quangminh.dang@gmail.com', '0953334455', '102 Hải Phòng, Q. Thanh Khê, Đà Nẵng', true, NOW(), NOW())
-ON CONFLICT (username) DO NOTHING;
+(5, 'hoanganh', '$2a$10$Yh/F0RRuLqSg6HnsmSAPB.OI/Y5fHzpiQt1nCEpjQqCkBQr3TuhIu', 'Nguyễn Hoàng Anh', 'hoanganh@gmail.com', '0971112233', '15 Lê Văn Sỹ, Quận 3, TP. Hồ Chí Minh', true, NOW(), NOW()),
+(6, 'thuylinh', '$2a$10$Yh/F0RRuLqSg6HnsmSAPB.OI/Y5fHzpiQt1nCEpjQqCkBQr3TuhIu', 'Phạm Thùy Linh', 'thuylinh.pham@gmail.com', '0962223344', '88 Cầu Giấy, Hà Nội', true, NOW(), NOW()),
+(7, 'quangminh', '$2a$10$Yh/F0RRuLqSg6HnsmSAPB.OI/Y5fHzpiQt1nCEpjQqCkBQr3TuhIu', 'Đặng Quang Minh', 'quangminh.dang@gmail.com', '0953334455', '102 Hải Phòng, Q. Thanh Khê, Đà Nẵng', true, NOW(), NOW())
+ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, enabled = true;
 
 -- Gán Role cho từng User
 INSERT INTO user_roles (user_id, role_id) VALUES
