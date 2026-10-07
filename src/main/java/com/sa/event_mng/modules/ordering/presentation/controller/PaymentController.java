@@ -92,18 +92,29 @@ public class PaymentController {
             String finalUrl;
             if ("web".equalsIgnoreCase(platform)) {
                 // Redirect back to Web Frontend
+                String baseUrl = (frontendUrl != null) ? frontendUrl.trim() : "http://localhost:5173";
+                if (baseUrl.endsWith("/")) {
+                    baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+                }
+                if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+                    baseUrl = "https://" + baseUrl;
+                }
                 String subPath = "success".equals(normalizedStatus) ? "/payment/success" : "/payment/cancel";
-                finalUrl = frontendUrl + subPath + "?orderCode=" + orderCode;
+                finalUrl = baseUrl + subPath + "?orderCode=" + orderCode;
             } else {
                 // Redirect to Mobile Deep Link
                 String normalizedPath = deepLinkPath.startsWith("/") ? deepLinkPath : "/" + deepLinkPath;
                 finalUrl = deepLinkScheme + "://" + deepLinkHost + normalizedPath + "?orderCode=" + orderCode + "&status=" + normalizedStatus;
             }
 
+            System.out.println("DEBUG: [REDIRECT] Redirecting to URL: " + finalUrl);
+
             HttpHeaders headers = new HttpHeaders();
             headers.setLocation(URI.create(finalUrl));
             return new ResponseEntity<>(headers, HttpStatus.SEE_OTHER);
         } catch (Exception e) {
+            System.err.println("ERROR: [REDIRECT] Failed to redirect: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
