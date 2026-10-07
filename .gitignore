@@ -34,3 +34,5 @@ build/
 
 ### Environment Variables ###
 .env
+deploy/cloudrun.env
+*.dump

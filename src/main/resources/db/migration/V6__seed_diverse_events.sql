@@ -1,4 +1,4 @@
--- Flyway Migration V4__seed_diverse_events.sql
+-- Flyway Migration V6__seed_diverse_events.sql
 -- Bổ sung 35 sự kiện đa dạng: 8 danh mục, 20 tỉnh/thành, giá vé từ 20.000đ đến 12.000.000đ.
 -- Trạng thái: phần lớn OPENING (mở bán quanh 09-10/2026), kèm UPCOMING, CLOSED, COMPLETED,
 -- một số hạng vé / sự kiện đã bán hết để test giao diện.

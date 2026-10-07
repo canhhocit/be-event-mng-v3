@@ -1,9 +1,9 @@
-name: CI-CD
+name: CI-CD (VPS - ngưng tự động)
 
+# Backend đã chuyển sang Cloud Run, deploy bằng Cloud Build (cloudbuild.yaml, deploy/README.md).
+# Workflow này chỉ còn chạy tay (Actions > Run workflow) để quay lại VPS khi cần.
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   deploy:

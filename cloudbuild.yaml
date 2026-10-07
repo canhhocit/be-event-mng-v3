@@ -1,0 +1,67 @@
+# Cloud Build: build image -> push Artifact Registry -> deploy Cloud Run (Singapore).
+#
+# Chạy tự động: Cloud Build trigger khi push lên nhánh main.
+# Chạy tay:     ./deploy/gcp.sh <PROJECT_ID> deploy
+#
+# Cấu hình runtime của service (CPU, RAM, billing, scaling, secret) nằm ở bước "deploy" bên dưới.
+# Muốn đổi thì sửa file này: chỉnh trên console sẽ bị ghi đè ở lần deploy sau.
+# Hướng dẫn đầy đủ: deploy/README.md
+
+substitutions:
+  _REGION: asia-southeast1
+  _SERVICE: event-mng-api
+  _AR_REPO: event-mng
+  _RUNTIME_SA: event-mng-run
+  _ENV_SECRET: event-mng-env
+  _IMAGE: ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}
+  # URL cố định của Cloud Run (https://SERVICE-PROJECT_NUMBER.REGION.run.app).
+  # Gắn domain riêng thì override biến này trong trigger.
+  _BACKEND_URL: https://${_SERVICE}-${PROJECT_NUMBER}.${_REGION}.run.app
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args: ['build', '-t', '${_IMAGE}:${BUILD_ID}', '-t', '${_IMAGE}:latest', '.']
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: ['push', '--all-tags', '${_IMAGE}']
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_IMAGE}:${BUILD_ID}
+      - --region=${_REGION}
+      - --service-account=${_RUNTIME_SA}@${PROJECT_ID}.iam.gserviceaccount.com
+      - --allow-unauthenticated
+      - --cpu=1
+      - --memory=1Gi
+      # Instance-based billing: @Scheduled (EventStatusTask, PingTask, TokenCleanupService) và việc
+      # gửi mail + tạo PDF bằng CompletableFuture sau webhook PayOS cần CPU cả khi không có request.
+      - --no-cpu-throttling
+      - --cpu-boost
+      # Giữ đúng 1 instance: cache Spring (ConcurrentMapCacheManager) nằm trong RAM của từng instance,
+      # nhiều instance sẽ trả dữ liệu cũ khác nhau.
+      - --min=1
+      - --max=1
+      # Toàn bộ cấu hình bí mật (DB, JWT, mail, PayOS, Cloudinary) nằm trong 1 secret dạng .properties,
+      # Spring nạp thêm qua SPRING_CONFIG_ADDITIONAL_LOCATION. Biến môi trường bên dưới được ưu tiên hơn file.
+      - --update-secrets=/secrets/app.properties=${_ENV_SECRET}:latest
+      - --update-env-vars=SPRING_CONFIG_ADDITIONAL_LOCATION=file:/secrets/app.properties,BACKEND_URL=${_BACKEND_URL},SEED_ENABLED=false
+
+images:
+  - ${_IMAGE}:${BUILD_ID}
+  - ${_IMAGE}:latest
+
+timeout: 1200s
+
+options:
+  dynamicSubstitutions: true
+  # _AR_REPO, _REGION... chỉ được dùng bên trong biến khác, tránh lỗi "not matched in the template".
+  substitutionOption: ALLOW_LOOSE
+  # Bắt buộc khi build chạy bằng service account do mình chỉ định (event-mng-deployer).
+  logging: CLOUD_LOGGING_ONLY
