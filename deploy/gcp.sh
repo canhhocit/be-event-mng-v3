@@ -162,6 +162,19 @@ setup() {
     gcloud artifacts repositories create "$AR_REPO" --project "$project" --location "$REGION" \
       --repository-format=docker --description="Docker image cua backend event-mng"
   fi
+  # Giữ 3 image mới nhất (đủ để rollback), xoá image cũ hơn 7 ngày: nằm trong 0,5 GB miễn phí.
+  local policy
+  policy=$(mktemp)
+  cat >"$policy" <<'EOF'
+[
+  {"name": "xoa-image-cu", "action": {"type": "Delete"}, "condition": {"tagState": "ANY", "olderThan": "7d"}},
+  {"name": "giu-3-ban-moi-nhat", "action": {"type": "Keep"}, "mostRecentVersions": {"keepCount": 3}}
+]
+EOF
+  gcloud artifacts repositories set-cleanup-policies "$AR_REPO" --project "$project" --location "$REGION" \
+    --policy="$policy" --no-dry-run >/dev/null
+  rm -f "$policy"
+  echo "  cleanup policy: giữ 3 image mới nhất"
 
   step "Service account"
   ensure_sa "$project" "$RUNTIME_SA_NAME" "Cloud Run runtime - $SERVICE"

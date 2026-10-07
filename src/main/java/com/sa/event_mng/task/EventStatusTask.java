@@ -12,20 +12,28 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class EventStatusTask {
 
+    private static final long INTERVAL_MS = 60000;
+
     private final EventRepository eventRepository;
+
+    private final AtomicLong lastRunAt = new AtomicLong();
 
     /**
      * Tự động cập nhật trạng thái sự kiện mỗi phút.
+     * Khi CPU bị bóp ngoài request (Cloud Run request-based billing) lịch này không chạy đều,
+     * EventStatusRefreshInterceptor sẽ gọi bù trước khi xử lý request.
      */
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = INTERVAL_MS)
     @Transactional
     public void autoUpdateEventStatus() {
+        lastRunAt.set(System.currentTimeMillis());
         LocalDateTime now = LocalDateTime.now();
         
         // Chỉ quét các sự kiện có khả năng thay đổi trạng thái tự động
@@ -47,5 +55,11 @@ public class EventStatusTask {
                 log.info("Event ID {}: Auto-updated status from {} to {}", event.getId(), oldStatus, newStatus);
             }
         }
+    }
+
+    public boolean claimIfStale() {
+        long last = lastRunAt.get();
+        long now = System.currentTimeMillis();
+        return now - last >= INTERVAL_MS && lastRunAt.compareAndSet(last, now);
     }
 }

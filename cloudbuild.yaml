@@ -40,18 +40,22 @@ steps:
       - --allow-unauthenticated
       - --cpu=1
       - --memory=1Gi
-      # Instance-based billing: @Scheduled (EventStatusTask, PingTask, TokenCleanupService) và việc
-      # gửi mail + tạo PDF bằng CompletableFuture sau webhook PayOS cần CPU cả khi không có request.
-      - --no-cpu-throttling
+      # Request-based billing + scale về 0: chỉ tính tiền khi đang xử lý request, không ai dùng thì instance tắt
+      # (request đầu tiên sau khi ngủ phải chờ app khởi động ~20-40s). Vì ngoài request CPU bị bóp:
+      #   APP_ASYNC_ENABLED=false  -> hoàn tất thanh toán, PDF, mail chạy ngay trong request (BackgroundTaskRunner)
+      #   APP_PING_ENABLED=false   -> tắt PingTask tự gọi chính mình (nếu không server/DB không bao giờ ngủ)
+      #   EventStatusTask được gọi bù trong request (EventStatusRefreshInterceptor).
+      # Muốn hết chờ khởi động: --no-cpu-throttling, --min=1, APP_ASYNC_ENABLED=true (tốn ~55-60 USD/tháng).
+      - --cpu-throttling
       - --cpu-boost
-      # Giữ đúng 1 instance: cache Spring (ConcurrentMapCacheManager) nằm trong RAM của từng instance,
-      # nhiều instance sẽ trả dữ liệu cũ khác nhau.
-      - --min=1
+      - --min=0
+      # Tối đa 1 instance: cache Spring (ConcurrentMapCacheManager) nằm trong RAM của từng instance,
+      # nhiều instance sẽ trả dữ liệu cũ khác nhau. Cũng là giới hạn chi phí.
       - --max=1
       # Toàn bộ cấu hình bí mật (DB, JWT, mail, PayOS, Cloudinary) nằm trong 1 secret dạng .properties,
       # Spring nạp thêm qua SPRING_CONFIG_ADDITIONAL_LOCATION. Biến môi trường bên dưới được ưu tiên hơn file.
       - --update-secrets=/secrets/app.properties=${_ENV_SECRET}:latest
-      - --update-env-vars=SPRING_CONFIG_ADDITIONAL_LOCATION=file:/secrets/app.properties,BACKEND_URL=${_BACKEND_URL},SEED_ENABLED=false
+      - --update-env-vars=SPRING_CONFIG_ADDITIONAL_LOCATION=file:/secrets/app.properties,BACKEND_URL=${_BACKEND_URL},SEED_ENABLED=false,APP_ASYNC_ENABLED=false,APP_PING_ENABLED=false
 
 images:
   - ${_IMAGE}:${BUILD_ID}

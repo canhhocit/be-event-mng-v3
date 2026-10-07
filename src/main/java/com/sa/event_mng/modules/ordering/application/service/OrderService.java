@@ -23,6 +23,7 @@ import com.sa.event_mng.model.enums.PaymentStatus;
 import com.sa.event_mng.model.enums.TicketStatus;
 import com.sa.event_mng.shared.exception.AppException;
 import com.sa.event_mng.shared.exception.ErrorCode;
+import com.sa.event_mng.shared.infrastructure.async.BackgroundTaskRunner;
 import com.sa.event_mng.shared.infrastructure.email.EmailService;
 import com.sa.event_mng.shared.infrastructure.pdf.PdfService;
 
@@ -54,6 +55,7 @@ public class OrderService {
     private final VoucherService voucherService;
     private final PdfService pdfService;
     private final PaymentService paymentService;
+    private final BackgroundTaskRunner backgroundTaskRunner;
 
     public OrderService(OrderRepository orderRepository, 
                         CartRepository cartRepository, 
@@ -64,7 +66,8 @@ public class OrderService {
                         EmailService emailService, 
                         VoucherService voucherService, 
                         PdfService pdfService, 
-                        PaymentService paymentService) {
+                        PaymentService paymentService,
+                        BackgroundTaskRunner backgroundTaskRunner) {
         this.orderRepository = orderRepository;
         this.cartRepository = cartRepository;
         this.userRepository = userRepository;
@@ -75,6 +78,7 @@ public class OrderService {
         this.voucherService = voucherService;
         this.pdfService = pdfService;
         this.paymentService = paymentService;
+        this.backgroundTaskRunner = backgroundTaskRunner;
     }
 
     private User getCurrentUser() {
@@ -319,12 +323,12 @@ public class OrderService {
             
             if (fullOrder.getCustomer() != null && fullOrder.getCustomer().getEmail() != null) {
                 final String customerEmail = fullOrder.getCustomer().getEmail();
-                java.util.concurrent.CompletableFuture.runAsync(() -> {
+                backgroundTaskRunner.runAfterCommit(() -> {
                     try {
                         byte[] pdfBytes = pdfService.generateOrderInvoice(fullOrder);
                         emailService.sendOrderConfirmationWithInvoice(customerEmail, fullOrder, pdfBytes);
                     } catch (Exception e) {
-                        log.error("Lỗi khi tạo PDF hoặc gửi mail bất đồng bộ: {}", e.getMessage());
+                        log.error("Lỗi khi tạo PDF hoặc gửi mail: {}", e.getMessage());
                     }
                 });
             }

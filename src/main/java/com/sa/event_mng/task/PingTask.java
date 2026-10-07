@@ -4,13 +4,16 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 
+// Tắt bằng APP_PING_ENABLED=false khi muốn server/DB được ngủ (Cloud Run scale về 0).
 @Component
+@ConditionalOnProperty(name = "app.ping.enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class PingTask {
 

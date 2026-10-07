@@ -6,7 +6,6 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.Map;
 import java.net.URI;
-import java.util.concurrent.CompletableFuture;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sa.event_mng.modules.ordering.application.service.OrderService;
+import com.sa.event_mng.shared.infrastructure.async.BackgroundTaskRunner;
 
 @RestController
 @RequestMapping("/api/v1/payments")
@@ -27,6 +27,7 @@ import com.sa.event_mng.modules.ordering.application.service.OrderService;
 public class PaymentController {
 
     OrderService orderService;
+    BackgroundTaskRunner backgroundTaskRunner;
 
     @org.springframework.beans.factory.annotation.Value("${app.payment.deep-link.scheme}")
     @lombok.experimental.NonFinal
@@ -70,7 +71,7 @@ public class PaymentController {
             String normalizedStatus = normalizeStatus(status);
 
             if ("success".equals(normalizedStatus)) {
-                CompletableFuture.runAsync(() -> {
+                backgroundTaskRunner.run(() -> {
                     try {
                         orderService.completePaymentByOrderCode(orderCode);
                     } catch (Exception ex) {
@@ -79,7 +80,7 @@ public class PaymentController {
                     }
                 });
             } else if ("cancel".equals(normalizedStatus)) {
-                CompletableFuture.runAsync(() -> {
+                backgroundTaskRunner.run(() -> {
                     try {
                         orderService.cancelPaymentByOrderCode(orderCode);
                     } catch (Exception ex) {
