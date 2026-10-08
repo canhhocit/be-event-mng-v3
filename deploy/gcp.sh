@@ -6,6 +6,7 @@
 #   ./deploy/gcp.sh env       <PROJECT_ID> [FILE]   # đẩy file cấu hình thành version secret mới, khởi động lại service
 #   ./deploy/gcp.sh deploy    <PROJECT_ID>          # build + deploy bằng Cloud Build từ code đang có trên máy
 #   ./deploy/gcp.sh status    <PROJECT_ID>          # URL, các revision gần nhất, gọi thử /api/v1/ping
+#   ./deploy/gcp.sh keepalive <PROJECT_ID>          # lịch gọi /api/v1/ping 12h/lần để Supabase Free không tạm dừng
 #
 # Đặt YES=1 để bỏ qua câu hỏi xác nhận. Tên tài nguyên phải khớp substitutions trong cloudbuild.yaml.
 set -euo pipefail
@@ -32,7 +33,7 @@ die()  { echo "LỖI: $*" >&2; exit 1; }
 warn() { echo "CẢNH BÁO: $*" >&2; }
 step() { echo; echo "==> $*"; }
 
-usage() { sed -n '2,10p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 1; }
+usage() { sed -n '2,11p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 1; }
 
 sa_email() { echo "$2@$1.iam.gserviceaccount.com"; }
 
@@ -86,16 +87,27 @@ check_env() {
 
   while IFS= read -r key; do
     echo "  - $key vẫn là giá trị mẫu"; errors=$((errors + 1))
-  done < <(grep -vE '^[[:space:]]*#' "$file" | grep -E 'thay-bang|ten-web-|ep-xxxx|xxxxxx@|email-da-xac-thuc' \
+  done < <(grep -vE '^[[:space:]]*#' "$file" | grep -E 'thay-bang|ten-web-|ep-xxxx|xxxxxx@|\.xxxxxxxxxx|email-da-xac-thuc' \
     | sed -E 's/[[:space:]]*[=:].*//; s/^[[:space:]]*//' || true)
 
   value=$(prop DATABASE_URL "$file")
   if [[ -n $value ]]; then
     [[ $value == jdbc:postgresql://* ]] || { echo "  - DATABASE_URL phải bắt đầu bằng jdbc:postgresql://"; errors=$((errors + 1)); }
     [[ $value != *@* ]] || { echo "  - DATABASE_URL không được chứa user:password@ (khai báo ở POSTGRES_USER/POSTGRES_PASSWORD)"; errors=$((errors + 1)); }
-    [[ $value == *sslmode=require* ]] || warn "DATABASE_URL nên có ?sslmode=require (Neon bắt buộc SSL)"
-    [[ $value != *us-east* ]] || warn "DATABASE_URL vẫn trỏ về Neon ở Mỹ (us-east)"
-    [[ $value == *-pooler.* ]] || warn "DATABASE_URL nên dùng host -pooler cho app (bật Connection pooling trên Neon)"
+    [[ $value == *sslmode=require* ]] || warn "DATABASE_URL nên có ?sslmode=require"
+    [[ $value != *neon.tech* ]] || warn "DATABASE_URL vẫn trỏ về Neon"
+    if [[ $value =~ //db\.[a-z0-9]+\.supabase\.co ]]; then
+      echo "  - DATABASE_URL đang là Direct connection của Supabase (chỉ IPv6, Cloud Run không gọi được): dùng Session pooler"
+      errors=$((errors + 1))
+    fi
+    if [[ $value == *:6543/* && $value != *prepareThreshold=0* ]]; then
+      echo "  - DATABASE_URL dùng Transaction pooler (cổng 6543), không hỗ trợ prepared statement: đổi sang Session pooler cổng 5432"
+      errors=$((errors + 1))
+    fi
+    if [[ $value == *pooler.supabase.com* && $(prop POSTGRES_USER "$file") != *.* ]]; then
+      echo "  - POSTGRES_USER của Supabase pooler phải có dạng postgres.<project-ref>"
+      errors=$((errors + 1))
+    fi
   fi
 
   value=$(prop FRONTEND_URL "$file")
@@ -252,10 +264,29 @@ status() {
   curl -fsS --max-time 60 "$url/api/v1/ping" && echo
 }
 
+# Supabase gói Free tạm dừng project khi 7 ngày gần như không có truy vấn; app lại scale về 0,
+# nên cần một lịch gọi định kỳ (mỗi lần gọi app thức dậy, chạy vài truy vấn rồi ngủ lại).
+keepalive() {
+  local project=$1 job=event-mng-keepalive number url
+  confirm "$project"
+  gcloud services enable cloudscheduler.googleapis.com --project "$project"
+  number=$(gcloud projects describe "$project" --format='value(projectNumber)')
+  url="https://$SERVICE-$number.$REGION.run.app/api/v1/ping"
+  local args=(--project "$project" --location "$REGION" --schedule "0 */12 * * *" --time-zone "Asia/Ho_Chi_Minh"
+    --uri "$url" --http-method GET --attempt-deadline 180s)
+  if gcloud scheduler jobs describe "$job" --project "$project" --location "$REGION" >/dev/null 2>&1; then
+    gcloud scheduler jobs update http "$job" "${args[@]}"
+  else
+    gcloud scheduler jobs create http "$job" "${args[@]}" \
+      --description "Goi /api/v1/ping 12h/lan de Supabase Free khong tam dung project"
+  fi
+  echo "Lịch $job: 0h và 12h mỗi ngày gọi $url"
+}
+
 cmd=${1:-}
 [[ $# -gt 0 ]] && shift
 case $cmd in
-  setup | env | deploy | status) [[ -n ${1:-} ]] || usage ;;
+  setup | env | deploy | status | keepalive) [[ -n ${1:-} ]] || usage ;;
 esac
 case $cmd in
   setup) setup "$1" ;;
@@ -263,5 +294,6 @@ case $cmd in
   env) push_env "$1" "${2:-$DEFAULT_ENV_FILE}" ;;
   deploy) deploy "$1" ;;
   status) status "$1" ;;
+  keepalive) keepalive "$1" ;;
   *) usage ;;
 esac

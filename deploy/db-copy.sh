@@ -1,30 +1,37 @@
 #!/usr/bin/env bash
-# Copy toàn bộ database Neon cũ (Mỹ) sang project Neon mới (Singapore) bằng pg_dump/pg_restore.
+# Copy toàn bộ database cũ (Neon ở Mỹ) sang Supabase (Singapore) bằng pg_dump/pg_restore.
 #
 #   export SOURCE_DATABASE_URL='postgresql://USER:PASS@ep-...us-east-2.aws.neon.tech/neondb?sslmode=require'
-#   export TARGET_DATABASE_URL='postgresql://USER:PASS@ep-...ap-southeast-1.aws.neon.tech/neondb?sslmode=require'
-#   ./deploy/neon-copy.sh check   # DB nguồn có dữ liệu người dùng thật không (ngoài seed của Flyway)?
-#   ./deploy/neon-copy.sh copy    # dump nguồn -> restore vào đích -> so số dòng từng bảng
+#   export TARGET_DATABASE_URL='postgresql://postgres.REF:PASS@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require'
+#   ./deploy/db-copy.sh check     # DB nguồn có dữ liệu người dùng thật không (ngoài seed của Flyway)?
+#   ./deploy/db-copy.sh copy      # dump nguồn -> restore vào đích -> so số dòng từng bảng
 #
 # - Chỉ ĐỌC database nguồn. Database đích phải TRỐNG, nên chạy TRƯỚC lần deploy Cloud Run đầu tiên
 #   (app khởi động sẽ tự chạy Flyway tạo bảng + seed).
-# - Lấy URL trên Neon console > Connect, TẮT "Connection pooling"; lỡ dán host -pooler script tự bỏ.
+# - Neon: lấy URL ở Connect, TẮT "Connection pooling"; lỡ dán host -pooler script tự bỏ.
+# - Supabase: dùng URL "Session pooler" (cổng 5432); lỡ dán Transaction pooler (6543) script tự đổi sang 5432.
 # - Nên tắt backend cũ trước khi copy để không phát sinh dữ liệu mới trong lúc dump.
 # - File dump giữ lại làm backup trong $BACKUP_DIR (mặc định ~/event-mng-db-backup).
 set -euo pipefail
 
 BACKUP_DIR=${BACKUP_DIR:-$HOME/event-mng-db-backup}
+REVOKE_SQL="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/src/main/resources/db/migration/V7__revoke_supabase_data_api_access.sql"
 
 die() { echo "LỖI: $*" >&2; exit 1; }
 
 usage() { sed -n '2,7p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 1; }
 
-# pg_dump/pg_restore không chạy được qua PgBouncer (host -pooler) của Neon.
+# pg_dump/pg_restore cần kết nối giữ nguyên session: không chạy qua PgBouncer của Neon (host -pooler)
+# hay Transaction pooler của Supabase (cổng 6543).
 direct_url() {
   local url=$1
   if [[ $url == *-pooler.* ]]; then
-    echo "  (bỏ -pooler khỏi host để dùng kết nối trực tiếp)" >&2
+    echo "  (bỏ -pooler khỏi host Neon để dùng kết nối trực tiếp)" >&2
     url=${url/-pooler./.}
+  fi
+  if [[ $url == *pooler.supabase.com:6543* ]]; then
+    echo "  (đổi Supabase Transaction pooler 6543 sang Session pooler 5432)" >&2
+    url=${url/pooler.supabase.com:6543/pooler.supabase.com:5432}
   fi
   echo "$url"
 }
@@ -94,19 +101,23 @@ copy() {
   echo "Nguồn: $(where_of "$src") (PostgreSQL $src_major)"
   echo "Đích:  $(where_of "$dst") (PostgreSQL $dst_major)"
   (( client_major >= src_major )) || die "pg_dump $client_major cũ hơn server nguồn ($src_major): cài postgresql-client-$src_major"
-  (( dst_major >= src_major )) || die "DB đích (PostgreSQL $dst_major) cũ hơn nguồn ($src_major): tạo project Neon đích cùng version"
+  (( dst_major >= src_major )) \
+    || echo "CẢNH BÁO: DB đích (PostgreSQL $dst_major) cũ hơn nguồn ($src_major). Schema của app đơn giản nên thường vẫn được; lỗi gì thì restore tự rollback." >&2
 
   tables=$(q "$dst" "SELECT count(*) FROM pg_tables WHERE schemaname = 'public'")
   [[ $tables == 0 ]] || die "DB đích đã có $tables bảng (có thể Cloud Run đã chạy Flyway trên đó).
-  Trên Neon console tạo database/branch trống rồi chạy lại. Script không xóa dữ liệu."
+  Tạo project Supabase mới (hoặc tự xoá các bảng trong schema public) rồi chạy lại. Script không xóa dữ liệu."
 
   mkdir -p "$BACKUP_DIR"
-  dump="$BACKUP_DIR/neon-$(date +%Y%m%d-%H%M%S).dump"
+  dump="$BACKUP_DIR/db-$(date +%Y%m%d-%H%M%S).dump"
   echo
   echo "==> Dump nguồn -> $dump"
   (umask 077 && pg_dump -Fc --no-owner --no-acl -d "$src" -f "$dump")
   echo "==> Restore vào đích (1 transaction: lỗi là rollback toàn bộ)"
   pg_restore --no-owner --no-acl --single-transaction --exit-on-error -d "$dst" "$dump"
+  # Bảng vừa restore trên Supabase nhận quyền mặc định cho anon/authenticated (Data API): thu hồi như V7,
+  # phòng khi DB nguồn đã ghi nhận V7 nên Flyway không chạy lại nó trên DB mới.
+  psql -X -q -v ON_ERROR_STOP=1 -d "$dst" -f "$REVOKE_SQL"
   echo
   echo "==> So số dòng"
   if compare_counts "$src" "$dst"; then
