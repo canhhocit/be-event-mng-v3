@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sa.event_mng.modules.ordering.application.service.OrderService;
+import com.sa.event_mng.modules.ordering.application.service.PaymentService;
 import com.sa.event_mng.shared.infrastructure.async.BackgroundTaskRunner;
 
 @RestController
@@ -27,6 +28,7 @@ import com.sa.event_mng.shared.infrastructure.async.BackgroundTaskRunner;
 public class PaymentController {
 
     OrderService orderService;
+    PaymentService paymentService;
     BackgroundTaskRunner backgroundTaskRunner;
 
     @org.springframework.beans.factory.annotation.Value("${app.payment.deep-link.scheme}")
@@ -70,10 +72,16 @@ public class PaymentController {
         try {
             String normalizedStatus = normalizeStatus(status);
 
+            // status trên URL ai cũng sửa được: chỉ hoàn tất/huỷ đơn theo trạng thái PayOS trả về.
             if ("success".equals(normalizedStatus)) {
                 backgroundTaskRunner.run(() -> {
                     try {
-                        orderService.completePaymentByOrderCode(orderCode);
+                        String payosStatus = paymentService.getPaymentStatus(orderCode);
+                        if ("PAID".equals(payosStatus)) {
+                            orderService.completePaymentByOrderCode(orderCode);
+                        } else {
+                            System.out.println("WARN: [REDIRECT] Order " + orderCode + " chưa thanh toán trên PayOS (status=" + payosStatus + "), không hoàn tất");
+                        }
                     } catch (Exception ex) {
                         System.err.println("ERROR: async completePaymentByOrderCode failed for " + orderCode + ": " + ex.getMessage());
                         ex.printStackTrace();
@@ -82,7 +90,12 @@ public class PaymentController {
             } else if ("cancel".equals(normalizedStatus)) {
                 backgroundTaskRunner.run(() -> {
                     try {
-                        orderService.cancelPaymentByOrderCode(orderCode);
+                        String payosStatus = paymentService.getPaymentStatus(orderCode);
+                        if ("CANCELLED".equals(payosStatus) || "EXPIRED".equals(payosStatus)) {
+                            orderService.cancelPaymentByOrderCode(orderCode);
+                        } else {
+                            System.out.println("WARN: [REDIRECT] Order " + orderCode + " không bị huỷ trên PayOS (status=" + payosStatus + "), giữ nguyên");
+                        }
                     } catch (Exception ex) {
                         System.err.println("ERROR: async cancelPaymentByOrderCode failed for " + orderCode + ": " + ex.getMessage());
                         ex.printStackTrace();
@@ -125,22 +138,8 @@ public class PaymentController {
         try {
             System.out.println("DEBUG: [WEBHOOK] Received call from PayOS. Body: " + body);
             
-            @SuppressWarnings("unchecked")
-            Map<String, Object> data = (Map<String, Object>) body.get("data");
-            
-            if (data != null) {
-                Object orderCodeObj = data.get("orderCode");
-                System.out.println("DEBUG: [WEBHOOK] OrderCode detected: " + orderCodeObj);
-                
-                if (orderCodeObj != null) {
-                    Long orderCode = Long.valueOf(orderCodeObj.toString());
-                    System.out.println("DEBUG: [WEBHOOK] Triggering OrderService.completePaymentByOrderCode for #" + orderCode);
-                    orderService.completePaymentByOrderCode(orderCode);
-                    System.out.println("DEBUG: [WEBHOOK] Process completed for #" + orderCode);
-                }
-            } else {
-                System.out.println("DEBUG: [WEBHOOK] Data is not a Map or missing.");
-            }
+            // Kiểm tra chữ ký, mã giao dịch và số tiền trước khi hoàn tất đơn
+            paymentService.handlePayOSWebhook(body);
         } catch (Exception e) {
             System.err.println("CRITICAL ERROR: [WEBHOOK] Failed to process. Error: " + e.getMessage());
             e.printStackTrace();
